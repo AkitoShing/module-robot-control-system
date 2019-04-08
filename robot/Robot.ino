@@ -48,7 +48,7 @@ void setup() {
 }
 
 void loop(){
-  
+  getBlueToothData();
 }
 
 void setPinMode() {
@@ -63,7 +63,7 @@ void setPinMode() {
 void getBlueToothData() {
   if (blueTooth.available()) { // data received from smartphone
     int size = 0;
-    blueToothBuffer[0] = blueTooth.read();
+    blueToothBuffer[size] = blueTooth.read();
     if (blueToothBuffer[0] = MOBILE_START_TRANSMIT){
       while (blueTooth.available()) {
         blueToothBuffer[size] = blueTooth.read();
@@ -75,8 +75,8 @@ void getBlueToothData() {
       if (blueToothBuffer[1] == ROBOT_JOYSTICK_CONTROL && size == 8) { //joystick Control
         setRobotControl(blueToothBuffer);
       }
-      if ((blueToothBuffer[1] == MODULE_DATA_TYPE_REQUEST || blueToothBuffer[0] == MODULE_DATA_TYPE_REQUEST ) && size == 2) { //Module Control
-        sendModuleRequest(MODULE_DATA_TYPE_CONTROL, blueToothBuffer[3]);
+      if ((blueToothBuffer[1] == MODULE_DATA_TYPE_REQUEST || blueToothBuffer[1] == ROBOT_JOYSTICK_CONTROL ) && size == 4) { //Module Control
+        sendModuleRequest(blueToothBuffer[1], blueToothBuffer[2]);
       }
     }
   }
