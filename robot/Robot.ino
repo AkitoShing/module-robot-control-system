@@ -63,24 +63,34 @@ void setPinMode() {
 void getBlueToothData() {
   if (blueTooth.available()) { // data received from smartphone
     int size = 0;
-    while (blueTooth.available()) {
-      blueToothBuffer[size] = blueTooth.read();
-      size++;
+    blueToothBuffer[0] = blueTooth.read();
+    if (blueToothBuffer[0] = MOBILE_START_TRANSMIT){
+      while (blueTooth.available()) {
+        blueToothBuffer[size] = blueTooth.read();
+        if (blueToothBuffer[size] = MOBILE_END_TRANSMIT) {
+          break;
+        }
+        size++;
+      }
+      if (blueToothBuffer[1] == ROBOT_JOYSTICK_CONTROL && size == 8) { //joystick Control
+        setRobotControl(blueToothBuffer);
+      }
+      if ((blueToothBuffer[1] == MODULE_DATA_TYPE_REQUEST || blueToothBuffer[0] == MODULE_DATA_TYPE_REQUEST ) && size == 2) { //Module Control
+        sendModuleRequest(MODULE_DATA_TYPE_CONTROL, blueToothBuffer[3]);
+      }
     }
-    if (blueToothBuffer[0] == ROBOT_JOYSTICK_CONTROL && size == 7) { //joystick Control
-      setRobotControl(blueToothBuffer);
-    }
-    if ((blueToothBuffer[0] == MODULE_DATA_TYPE_REQUEST || blueToothBuffer[0] == MODULE_DATA_TYPE_REQUEST ) && i == 2) { //Module Control
-      sendModuleRequest(MODULE_DATA_TYPE_CONTROL, blueToothBuffer[1]);
-    }
-    while(blueTooth.available()){
-      blueTooth.read();
-    }
+  }
+  while(blueTooth.available()){
+    blueTooth.read();
   }
 }
 
 void sendblueToothData(String data) { //TODO:
-  blueTooth.print(data);
+  String blueToothData = "";
+  blueToothData += ROBOT_START_TRANSMIT;
+  blueToothData += data;
+  blueToothData += ROBOT_END_TRANSMIT;
+  blueTooth.print(blueToothData);
   Serial.print("Sended Bluetooth Data: ");
   Serial.println(data);
   delay(2);
