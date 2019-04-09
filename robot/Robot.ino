@@ -177,7 +177,6 @@ void sendModuleRequest(char requestType, char controlChar) {
 
 void ResponeReceived(int count) {
   char responeType;
-  String data = "";
   if (Wire.available()) {
     responeType = Wire.read();
 
@@ -190,24 +189,18 @@ void ResponeReceived(int count) {
       while (Wire.available()) {
         moduleName += (char)Wire.read();
       }
+
       Serial.print("Name recevied: ");
       Serial.println(moduleName);
-      data = MODULE_DATA_MODULE_INFO;
-      data += MODULE_DATA_MODULE_NAME;
-      data += moduleName;
-      sendblueToothData(data);
       break;
     case MODULE_DATA_MODULE_CREATOR:
       moduleCreator = "";
       while (Wire.available()) {
         moduleCreator += (char)Wire.read();
       }
+
       Serial.print("Creator recevied: ");
       Serial.println(moduleCreator);
-      data = MODULE_DATA_MODULE_INFO;
-      data += MODULE_DATA_MODULE_CREATOR;
-      data += moduleCreator;
-      sendblueToothData(data);
       break;
     case MODULE_DATA_MODULE_STATUS:
       moduleStatus = "";
@@ -228,11 +221,25 @@ void ResponeReceived(int count) {
 }
 
 void requestModuleInfo() {
+  String data = "";
+
   Serial.println("Requesting Module Info");
   sendModuleRequest(MODULE_DATA_TYPE_REQUEST, MODULE_DATA_MODULE_NAME);
   Serial.println("Name requested");
+  delay(1000);
   sendModuleRequest(MODULE_DATA_TYPE_REQUEST, MODULE_DATA_MODULE_CREATOR);
   Serial.println("Creator requested");
+  delay(1000);
+
+  data = MODULE_DATA_MODULE_INFO;
+  data += MODULE_DATA_MODULE_NAME;
+  data += moduleName;
+  sendblueToothData(data);
+
+  data = MODULE_DATA_MODULE_INFO;
+  data += MODULE_DATA_MODULE_CREATOR;
+  data += moduleCreator;
+  sendblueToothData(data);
 }
 
 void requestModuleStatus() {
