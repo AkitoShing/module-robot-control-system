@@ -5,6 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/libraries/QueueList",
+                "${workspaceFolder}/libraries/Timer-master",
                 "C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/EEPROM/src",
                 "C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/HID/src",
                 "C:/Program Files (x86)/Arduino/hardware/arduino/avr/libraries/SoftwareSerial/src",
