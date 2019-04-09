@@ -17,6 +17,10 @@ unsigned long time_now = 0;
 char moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY ;
 
 void setup() {
+  pinMode(2, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(MODULE_ENABLE_PIN, OUTPUT);
+
   Wire.begin(SLAVE_ADDRESS);
   Wire.onReceive(actionReceived);
   Serial.begin(115200);
@@ -28,8 +32,7 @@ void setup() {
   delay(10);
   Serial.println("Setup Finish......");
 
-  pinMode(2, OUTPUT);
-  pinMode(3, OUTPUT);
+  digitalWrite(MODULE_ENABLE_PIN, HIGH);
 }
 
 void loop() {

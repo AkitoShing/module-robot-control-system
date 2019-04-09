@@ -3,11 +3,11 @@
 #include <Data.h>
 
 //H-bridge
-#define IN1 8
-#define IN2 9
+#define HBRIDGE_IN1 8
+#define HBRIDGE_IN2 9
 #define LEFT_MOTOR 10
-#define IN3 12
-#define IN4 13
+#define HBRIDGE_IN3 12
+#define HBRIDGE_IN4 13
 #define RIGHT_MOTOR 11
 
 //blueTooth Communication
@@ -38,12 +38,24 @@ void setup() {
   Wire.begin(MASTER_ADDRESS);
   Wire.onReceive(ResponeReceived);
 
-  requestModuleInfo();
-  delay(2000);
+  if (moduleEnabled()){
+    Serial.println("Module Detacted ");
+    Serial.println("Requesting Module Info");
+    requestModuleInfo();
+    delay(2000);
+  }
 }
 
 void loop(){
   getBlueToothData();
+  if (!moduleEnabled()){
+    String data = "";
+    data = MODULE_DATA_MODULE_INFO;
+    data += MODULE_DATA_MODULE_STATUS;
+    data += MODULE_DATA_MODULE_STATUS_MODULE_DISABLE;
+//    sendblueToothData(data);
+    Serial.println(data);
+  }
   if (moduleNameUpdated) {
     String data = "";
     data += MODULE_DATA_MODULE_INFO;
@@ -68,6 +80,7 @@ void loop(){
     sendblueToothData(data);
     moduleStatusUpdated = false;
   }
+  
 //  if (moduleName = "") {
 //    Serial.println("No name recevied!");
 //    sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_NAME);
@@ -84,10 +97,11 @@ void loop(){
 void setPinMode() {
   pinMode(LEFT_MOTOR, OUTPUT);
   pinMode(RIGHT_MOTOR, OUTPUT);
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
-  pinMode(IN3, OUTPUT);
-  pinMode(IN4, OUTPUT);
+  pinMode(HBRIDGE_IN1, OUTPUT);
+  pinMode(HBRIDGE_IN2, OUTPUT);
+  pinMode(HBRIDGE_IN3, OUTPUT);
+  pinMode(HBRIDGE_IN4, OUTPUT);
+  pinMode(MODULE_ENABLE_PIN, INPUT);
 }
 
 void getBlueToothData() {
@@ -145,28 +159,28 @@ void setRobotControl(byte data[8]) {
 
   if (angle > 170 && angle < 190) {
     // Serial.print("Left spin ");
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
+    digitalWrite(HBRIDGE_IN1, LOW);
+    digitalWrite(HBRIDGE_IN2, HIGH);
+    digitalWrite(HBRIDGE_IN3, HIGH);
+    digitalWrite(HBRIDGE_IN4, LOW);
     leftMix = 255;
     rightMix = 255;
   }
   if (angle >= 0 && angle < 11 || angle > 350 && angle < 360) {
     // Serial.print("Right spin");
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, HIGH);
+    digitalWrite(HBRIDGE_IN1, HIGH);
+    digitalWrite(HBRIDGE_IN2, LOW);
+    digitalWrite(HBRIDGE_IN3, LOW);
+    digitalWrite(HBRIDGE_IN4, HIGH);
     leftMix = 255;
     rightMix = 255;
   }
   if (angle > 10 && angle < 171) {
     // Serial.print("Forward ");
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
+    digitalWrite(HBRIDGE_IN1, HIGH);
+    digitalWrite(HBRIDGE_IN2, LOW);
+    digitalWrite(HBRIDGE_IN3, HIGH);
+    digitalWrite(HBRIDGE_IN4, LOW);
     if (angle < 90) leftMix = 255;
     leftMix = map(angle, 90, 170, 255, 0);
     if (angle > 90) rightMix = 255;
@@ -174,10 +188,10 @@ void setRobotControl(byte data[8]) {
   }
   if (angle > 189 && angle < 351) {
     // Serial.print("Backward ");
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, HIGH);
+    digitalWrite(HBRIDGE_IN1, LOW);
+    digitalWrite(HBRIDGE_IN2, HIGH);
+    digitalWrite(HBRIDGE_IN3, LOW);
+    digitalWrite(HBRIDGE_IN4, HIGH);
     if (angle < 270) leftMix = 255;
     leftMix = map(angle, 270, 351, 255, 0);
     if (angle > 270) rightMix = 255;
@@ -254,7 +268,6 @@ void ResponeReceived(int count) {
 }
 
 void requestModuleInfo() {
-  Serial.println("Requesting Module Info");
   sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_NAME);
   Serial.println("Name requested");
   sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_CREATOR);
@@ -264,4 +277,8 @@ void requestModuleInfo() {
 void requestModuleStatus() {
   sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_STATUS);
   Serial.println("Module Status requested");
+}
+
+bool moduleEnabled() {
+  return digitalRead(MODULE_ENABLE_PIN);
 }
