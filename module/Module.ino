@@ -96,8 +96,7 @@ void response(char request) {
       break;
     case MODULE_DATA_MODULE_STATUS:
       Serial.println("Status Requested");
-       Wire.beginTransmission(MASTER_ADDRESS);
-      Wire.write(DATA_TYPE_RESPONSE);
+      Wire.beginTransmission(MASTER_ADDRESS);
       Wire.write(MODULE_DATA_MODULE_STATUS);
       Wire.write(moduleStatus);
       Wire.endTransmission();
