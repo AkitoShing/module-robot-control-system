@@ -100,44 +100,56 @@ void setRobotControl(byte data[8]) {
   int angle     = (data[1] - 48) * 100 + (data[2] - 48) * 10 + (data[3] - 48); // obtain the Int from the ASCII representation
   int amplitube = (data[4] - 48) * 100 + (data[5] - 48) * 10 + (data[6] - 48);
 
+  byte leftMix;
+  byte rightMix;
+
   if (angle < 0 || angle > 360 || amplitube < 0 || amplitube > 100) {
     return; //Data Error
   }
 
   if (angle > 170 && angle < 190) {
+    // Serial.print("Left spin ");
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
-    // Serial.print("Left spin ");
+    leftMix = 255;
+    rightMix = 255;
   }
   if (angle >= 0 && angle < 11 || angle > 350 && angle < 360) {
+    // Serial.print("Right spin");
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
-    // Serial.print("Right spin");
+    leftMix = 255;
+    rightMix = 255;
   }
   if (angle > 10 && angle < 171) {
+    // Serial.print("Forward ");
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
-    // Serial.print("Forward ");
+    if (angle < 90) leftMix = 255;
+    leftMix = map(angle, 90, 170, 255, 0);
+    if (angle > 90) rightMix = 255;
+    rightMix = map(angle, 11, 90, 0, 255);
   }
   if (angle > 189 && angle < 351) {
+    // Serial.print("Backward ");
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
-    // Serial.print("Backward ");
+    if (angle < 270) leftMix = 255;
+    leftMix = map(angle, 270, 351, 255, 0);
+    if (angle > 270) rightMix = 255;
+    rightMix = map(angle, 189, 270, 0, 255);
   }
-  //FIXME: fix the calculation
-  float leftMotorPower  = (float)amplitube * (abs((float)180 - (float)angle) / (float)180);
-  float rightMotorPower = (float)amplitube * (float)1 - (abs((float)angle - (float)180) / (float)180);
-
-  int int_leftMotorPower  = map(leftMotorPower, 0, 50, 0, 255);
-  int int_rightMotorPower = map(rightMotorPower, 0, 50, 0, 255);
+  //TODO: Test the new calculation
+  int leftMotorPower = (leftMix * amplitube) / 100;
+  int rightMotorPower = (rightMix * amplitube) / 100;
 
   // Serial.print("Left Motor Power: ");
   // Serial.print(int_leftMotorPower);
