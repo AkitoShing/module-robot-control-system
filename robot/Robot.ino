@@ -2,20 +2,12 @@
 #include <Wire.h>
 #include <Data.h>
 
-//Data Communication
-#define STX 0x02 //ASSCII representation of "Start of text"
-#define ETX 0x03 //ASSCII representation of "End of text"
-#define DC1 0x11
-#define DC2 0x12
-#define DC3 0x13
-
 //H-bridge
 #define IN1 8
 #define IN2 9
 #define LEFT_MOTOR 10
 #define IN3 12
 #define IN4 13
-
 #define RIGHT_MOTOR 11
 
 //blueTooth Communication
@@ -25,13 +17,12 @@
 
 SoftwareSerial blueTooth(BLUE_TOOTH_TX, BLUE_TOOTH_RX);
 byte blueToothBuffer[8] ;         //Empty blueToothBuffer for data communication
+String blueToothData = "";
 
-byte moduleControlStatus = 0;                               //Store moduleControl status
 String robotStatus = "";                                    //Status of robot
 String moduleStatus = "";                                   //Status of robot
 String moduleName = "";                                     //The name of attached module
 String moduleCreator = "";                                  //The creatot of attached module
-String blueToothData = "";
 
 void setup() {
   setPinMode();
@@ -73,6 +64,7 @@ void getBlueToothData() {
         size++;
       }
       if (blueToothBuffer[1] == ROBOT_JOYSTICK_CONTROL && size == 8) { //joystick Control
+        Serial.print("Joystick Control received: ");
         setRobotControl(blueToothBuffer);
       }
       if ((blueToothBuffer[1] == MODULE_DATA_TYPE_REQUEST || blueToothBuffer[1] == ROBOT_JOYSTICK_CONTROL ) && size == 4) { //Module Control
@@ -99,13 +91,18 @@ void sendblueToothData(String data) { //TODO:
 void setRobotControl(byte data[8]) {
   int angle     = (data[1] - 48) * 100 + (data[2] - 48) * 10 + (data[3] - 48); // obtain the Int from the ASCII representation
   int amplitube = (data[4] - 48) * 100 + (data[5] - 48) * 10 + (data[6] - 48);
-
-  byte leftMix;
-  byte rightMix;
+  
+  Serial.print("Angle: ");
+  Serial.print(angle);
+  Serial.print(" Amplitube: ");
+  Serial.println(amplitube);
 
   if (angle < 0 || angle > 360 || amplitube < 0 || amplitube > 100) {
     return; //Data Error
   }
+
+  byte leftMix;
+  byte rightMix;
 
   if (angle > 170 && angle < 190) {
     // Serial.print("Left spin ");
@@ -147,15 +144,20 @@ void setRobotControl(byte data[8]) {
     if (angle > 270) rightMix = 255;
     rightMix = map(angle, 189, 270, 0, 255);
   }
+
+  Serial.print("Left Motor Mix: ");
+  Serial.print(leftMix);
+  Serial.print(" Right Motor Mix: ");
+  Serial.println(rightMix);
+
   //TODO: Test the new calculation
   int leftMotorPower = (leftMix * amplitube) / 100;
   int rightMotorPower = (rightMix * amplitube) / 100;
 
-  // Serial.print("Left Motor Power: ");
-  // Serial.print(int_leftMotorPower);
-  // Serial.print(" ");
-  // Serial.print("Right Motor Power: ");
-  // Serial.println(int_rightMotorPower);
+  Serial.print("Left Motor Power: ");
+  Serial.print(leftMotorPower);
+  Serial.print(" Right Motor Power: ");
+  Serial.println(rightMotorPower);
 
   analogWrite(LEFT_MOTOR, leftMotorPower);
   analogWrite(RIGHT_MOTOR, rightMotorPower);
@@ -166,6 +168,7 @@ void sendModuleRequest(char requestType, char controlChar) {
   Wire.write(requestType);
   Wire.write(controlChar);
   Wire.endTransmission();
+
   Serial.print("Sending Module Request Type: ");
   Serial.print(requestType);
   Serial.print(" Data: ");
@@ -176,6 +179,7 @@ void ResponeReceived(int count) {
   char responeType;
   if (Wire.available()) {
     responeType = Wire.read();
+
     Serial.print("Respone recevied: ");
     Serial.println(responeType);
   }
@@ -185,6 +189,7 @@ void ResponeReceived(int count) {
       while (Wire.available()) {
         moduleName += (char)Wire.read();
       }
+
       Serial.print("Name recevied: ");
       Serial.println(moduleName);
       break;
@@ -193,6 +198,7 @@ void ResponeReceived(int count) {
       while (Wire.available()) {
         moduleCreator += (char)Wire.read();
       }
+
       Serial.print("Creator recevied: ");
       Serial.println(moduleCreator);
       break;
@@ -201,8 +207,10 @@ void ResponeReceived(int count) {
       while (Wire.available()) {
         moduleStatus += (char)Wire.read();
       }
+
       Serial.print("Status recevied: ");
       Serial.println(moduleStatus);
+      returnModuleStatus(moduleStatus);
       break;
     default:
       break;
@@ -214,6 +222,7 @@ void ResponeReceived(int count) {
 
 void requestModuleInfo() {
   String data = "";
+
   Serial.println("Requesting Module Info");
   sendModuleRequest(MODULE_DATA_TYPE_REQUEST, MODULE_DATA_MODULE_NAME);
   Serial.println("Name requested");
@@ -221,10 +230,12 @@ void requestModuleInfo() {
   sendModuleRequest(MODULE_DATA_TYPE_REQUEST, MODULE_DATA_MODULE_CREATOR);
   Serial.println("Creator requested");
   delay(1000);
+
   data = MODULE_DATA_MODULE_INFO;
   data += MODULE_DATA_MODULE_NAME;
   data += moduleName;
   sendblueToothData(data);
+
   data = MODULE_DATA_MODULE_INFO;
   data += MODULE_DATA_MODULE_CREATOR;
   data += moduleCreator;
@@ -233,4 +244,9 @@ void requestModuleInfo() {
 
 void requestModuleStatus() {
   sendModuleRequest(MODULE_DATA_TYPE_REQUEST, MODULE_DATA_MODULE_STATUS);
+  Serial.println("Requesting Module Status");
+}
+
+void returnModuleStatus(String moduleStatus) {
+  sendblueToothData(moduleStatus);
 }
