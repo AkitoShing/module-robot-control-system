@@ -14,12 +14,12 @@ bool attackReady = true;
 int attackTimeout = 3000;
 unsigned long time_now = 0;
 
-char moduleStatus = MODULE_ATTACK_READY ;
+char moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY ;
 
 void setup() {
   Wire.begin(SLAVE_ADDRESS);
   Wire.onReceive(actionReceived);
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   Serial.print("Module Name: ");
   Serial.println(MODULE_NAME);
@@ -37,10 +37,10 @@ void loop() {
     response(responseWith);
     responsed = !responsed;
   }
-  if(moduleStatus = MODULE_ATTACK_READY){
+  if(moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY){
     digitalWrite(2, HIGH);
     digitalWrite(3, LOW);
-  }else if(moduleStatus = MODULE_ATTACK_CD){
+  }else if(moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_CD){
     digitalWrite(2, LOW);
     digitalWrite(3, HIGH);
   }
@@ -57,12 +57,12 @@ void actionReceived(int count) { //onReceive
   Serial.println(request);
 
   switch (requestType) {
-    case MODULE_DATA_TYPE_REQUEST:
+    case DATA_TYPE_REQUEST:
       Serial.println("Request recevied");
       responseWith = request;
       responsed = false;
       break;
-    case MODULE_DATA_TYPE_CONTROL:
+    case MODULE_DATA_MODULE_ACTION:
       Serial.println("Control recevied");
       getModuleControl(request);
       break;
@@ -73,19 +73,19 @@ void actionReceived(int count) { //onReceive
 
 void response(char request) {
   switch (request) {
-    case MODULE_DATA_MODULE_NAME:
+    case MODULE_DATA_MODULE_INFO_NAME:
       Serial.println("Name Requested");
       Wire.beginTransmission(MASTER_ADDRESS);
-      Wire.write(MODULE_DATA_MODULE_NAME);
+      Wire.write(MODULE_DATA_MODULE_INFO_NAME);
       Wire.write(MODULE_NAME);
       Wire.endTransmission();
       Serial.print("Name responsed: ");
       Serial.println(MODULE_NAME);
       break;
-    case MODULE_DATA_MODULE_CREATOR:
+    case MODULE_DATA_MODULE_INFO_CREATOR:
       Serial.println("Creator Requested");
       Wire.beginTransmission(MASTER_ADDRESS);
-      Wire.write(MODULE_DATA_MODULE_CREATOR);
+      Wire.write(MODULE_DATA_MODULE_INFO_CREATOR);
       Wire.write(MODULE_CREATOR);
       Wire.endTransmission();
       Serial.print("Creaotr responsed: ");
@@ -93,42 +93,34 @@ void response(char request) {
       break;
     case MODULE_DATA_MODULE_STATUS:
       Serial.println("Status Requested");
+       Wire.beginTransmission(MASTER_ADDRESS);
+      Wire.write(DATA_TYPE_RESPONSE);
+      Wire.write(MODULE_DATA_MODULE_STATUS);
+      Wire.write(moduleStatus);
+      Wire.endTransmission();
       Serial.print("Status responsed: ");
       Serial.println(moduleStatus);
-      sendResponse(MODULE_DATA_MODULE_STATUS, moduleStatus);
       break;
     default:
       break;
   }
 }
 
-void sendResponse(char responseType, char responseData) {
-  Wire.beginTransmission(MASTER_ADDRESS);
-  Wire.write(responseType);
-  Wire.write(responseData);
-  Wire.endTransmission();
-  Serial.print("Sending Response Type: ");
-  Serial.print(responseType);
-  Serial.print(" Data: ");
-  Serial.println(responseData);
-}
-
-
 void getModuleControl(char control) { //
   switch (control) {
-    case MODULE_ACTION_UP:
+    case MODULE_DATA_MODULE_ACTION_UP:
       moduleUp();
       break;
-    case MODULE_ACTION_DOWN:
+    case MODULE_DATA_MODULE_ACTION_DOWN:
       moduleDown();
       break;
-    case MODULE_ACTION_LEFT:
+    case MODULE_DATA_MODULE_ACTION_LEFT:
       moduleLeft();
       break;
-    case MODULE_ACTION_RIGHT:
+    case MODULE_DATA_MODULE_ACTION_RIGHT:
       moduleRight();
       break;
-    case 'A':
+    case MODULE_DATA_MODULE_ACTION_ATTACK:
       if (attackReady) {
         moduleAttack();
         attackReady = false;
@@ -136,10 +128,10 @@ void getModuleControl(char control) { //
       } else {
         if (millis() - time_now > attackTimeout) {
           attackReady = true;
-          moduleStatus = MODULE_ATTACK_READY;
+          moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY;
           Serial.println("Attack ready");
         } else {
-          moduleStatus = MODULE_ATTACK_CD;
+          moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_CD;
           Serial.println("Attack CD");
         }
       }

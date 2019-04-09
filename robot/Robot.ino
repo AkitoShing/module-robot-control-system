@@ -20,14 +20,18 @@ byte blueToothBuffer[8] ;         //Empty blueToothBuffer for data communication
 String blueToothData = "";
 
 String robotStatus = "";                                    //Status of robot
+bool robotStatusUpdated = false;
 String moduleStatus = "";                                   //Status of robot
+bool moduleStatusUpdated = false;
 String moduleName = "";                                     //The name of attached module
+bool moduleNameUpdated = false;
 String moduleCreator = "";                                  //The creatot of attached module
+bool moduleCreatorUpdated = false;
 
 void setup() {
   setPinMode();
 
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   blueTooth.begin(BLUE_TOOTH_BAUDRATE);
 
@@ -40,6 +44,41 @@ void setup() {
 
 void loop(){
   getBlueToothData();
+  if (moduleNameUpdated) {
+    String data = "";
+    data += MODULE_DATA_MODULE_INFO;
+    data += MODULE_DATA_MODULE_INFO_NAME;
+    data += moduleName;
+    sendblueToothData(data);
+    moduleNameUpdated = false;
+  }
+  if (moduleCreatorUpdated) {
+    String data = "";
+    data += MODULE_DATA_MODULE_INFO;
+    data += MODULE_DATA_MODULE_INFO_CREATOR;
+    data += moduleCreator;
+    sendblueToothData(data);
+    moduleCreatorUpdated = false;
+  }
+  if (moduleStatusUpdated) {
+    String data = "";
+    data = MODULE_DATA_MODULE_INFO;
+    data += MODULE_DATA_MODULE_STATUS;
+    data += moduleStatus;
+    sendblueToothData(data);
+    moduleStatusUpdated = false;
+  }
+//  if (moduleName = "") {
+//    Serial.println("No name recevied!");
+//    sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_NAME);
+//    Serial.println("Name requested");
+//  }
+//  if (moduleCreator = "") {
+//    Serial.println("No creator recevied!");
+//    sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_CREATOR);
+//    Serial.println("Creator requested");
+//  }
+  
 }
 
 void setPinMode() {
@@ -63,11 +102,11 @@ void getBlueToothData() {
         }
         size++;
       }
-      if (blueToothBuffer[1] == ROBOT_JOYSTICK_CONTROL && size == 8) { //joystick Control
+      if (blueToothBuffer[1] == ROBOT_DATA_JOYSTICK_CONTROL && size == 8) { //joystick Control
         Serial.print("Joystick Control received: ");
         setRobotControl(blueToothBuffer);
       }
-      if ((blueToothBuffer[1] == MODULE_DATA_TYPE_REQUEST || blueToothBuffer[1] == ROBOT_JOYSTICK_CONTROL ) && size == 4) { //Module Control
+      if ((blueToothBuffer[1] == DATA_TYPE_REQUEST || blueToothBuffer[1] == MODULE_DATA_MODULE_ACTION ) && size == 4) { //Module Control
         sendModuleRequest(blueToothBuffer[1], blueToothBuffer[2]);
       }
     }
@@ -177,42 +216,36 @@ void sendModuleRequest(char requestType, char controlChar) {
 
 void ResponeReceived(int count) {
   char responeType;
+  String data = "";
   if (Wire.available()) {
     responeType = Wire.read();
 
     Serial.print("Respone recevied: ");
     Serial.println(responeType);
   }
+  while (Wire.available()) {
+    data += (char)Wire.read();
+  }
   switch (responeType) {
-    case MODULE_DATA_MODULE_NAME:
-      moduleName = "";
-      while (Wire.available()) {
-        moduleName += (char)Wire.read();
-      }
-
+    case MODULE_DATA_MODULE_INFO_NAME:
+      moduleName = data;
       Serial.print("Name recevied: ");
       Serial.println(moduleName);
+      moduleNameUpdated = true;
       break;
-    case MODULE_DATA_MODULE_CREATOR:
-      moduleCreator = "";
-      while (Wire.available()) {
-        moduleCreator += (char)Wire.read();
-      }
 
+    case MODULE_DATA_MODULE_INFO_CREATOR:
+      moduleCreator = data;
       Serial.print("Creator recevied: ");
       Serial.println(moduleCreator);
+      moduleCreatorUpdated = true;
       break;
-    case MODULE_DATA_MODULE_STATUS:
-      moduleStatus = "";
-      while (Wire.available()) {
-        moduleStatus += (char)Wire.read();
-      }
 
+    case MODULE_DATA_MODULE_STATUS:
+      moduleStatus = data;
       Serial.print("Status recevied: ");
       Serial.println(moduleStatus);
-      returnModuleStatus(moduleStatus);
-      break;
-    default:
+      moduleStatusUpdated = true;
       break;
   }
   while (Wire.available()) {
@@ -221,32 +254,14 @@ void ResponeReceived(int count) {
 }
 
 void requestModuleInfo() {
-  String data = "";
-
   Serial.println("Requesting Module Info");
-  sendModuleRequest(MODULE_DATA_TYPE_REQUEST, MODULE_DATA_MODULE_NAME);
+  sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_NAME);
   Serial.println("Name requested");
-  delay(1000);
-  sendModuleRequest(MODULE_DATA_TYPE_REQUEST, MODULE_DATA_MODULE_CREATOR);
+  sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_CREATOR);
   Serial.println("Creator requested");
-  delay(1000);
-
-  data = MODULE_DATA_MODULE_INFO;
-  data += MODULE_DATA_MODULE_NAME;
-  data += moduleName;
-  sendblueToothData(data);
-
-  data = MODULE_DATA_MODULE_INFO;
-  data += MODULE_DATA_MODULE_CREATOR;
-  data += moduleCreator;
-  sendblueToothData(data);
 }
 
 void requestModuleStatus() {
-  sendModuleRequest(MODULE_DATA_TYPE_REQUEST, MODULE_DATA_MODULE_STATUS);
-  Serial.println("Requesting Module Status");
-}
-
-void returnModuleStatus(String moduleStatus) {
-  sendblueToothData(moduleStatus);
+  sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_STATUS);
+  Serial.println("Module Status requested");
 }
