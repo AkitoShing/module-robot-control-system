@@ -1,5 +1,5 @@
 #define MOBILE_START_TRANSMIT '{'
-#define ROBOT_START_TRANSMIT '['
+#define ROBOT_START_TRANSMIT '('
 
 #define DATA_TYPE_REQUEST '?'
 #define DATA_TYPE_RESPONSE '!'
@@ -24,7 +24,7 @@
 #define MODULE_DATA_MODULE_STATUS_MODULE_DISABLE 'o'
 
 #define MOBILE_END_TRANSMIT '}'
-#define ROBOT_END_TRANSMIT ']'
+#define ROBOT_END_TRANSMIT ')'
 
 
 //Wire I2C Communication
