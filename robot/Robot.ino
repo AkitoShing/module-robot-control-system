@@ -11,12 +11,12 @@
 #define RIGHT_MOTOR 11
 
 //blueTooth Communication
-#define BLUE_TOOTH_BAUDRATE 9600
+#define BLUE_TOOTH_BAUDRATE 38400
 #define BLUE_TOOTH_TX 2
 #define BLUE_TOOTH_RX 3
 
 SoftwareSerial blueTooth(BLUE_TOOTH_TX, BLUE_TOOTH_RX);
-byte blueToothBuffer[8] ;         //Empty blueToothBuffer for data communication
+byte blueToothBuffer[8]  = {0, 0, 0, 0, 0, 0, 0, 0};        //Empty blueToothBuffer for data communication
 String blueToothData = "";
 
 String robotStatus = "";                                    //Status of robot
@@ -38,7 +38,7 @@ void setup() {
   Wire.begin(MASTER_ADDRESS);
   Wire.onReceive(ResponeReceived);
 
-  if (moduleEnabled()){
+  if (moduleEnabled()) {
     Serial.println("Module Detacted ");
     Serial.println("Requesting Module Info");
     requestModuleInfo();
@@ -46,14 +46,14 @@ void setup() {
   }
 }
 
-void loop(){
+void loop() {
   getBlueToothData();
-  if (!moduleEnabled()){
+  if (!moduleEnabled()) {
     String data = "";
     data = MODULE_DATA_MODULE_INFO;
     data += MODULE_DATA_MODULE_STATUS;
     data += MODULE_DATA_MODULE_STATUS_MODULE_DISABLE;
-//    sendblueToothData(data);
+    //    sendblueToothData(data);
     Serial.println(data);
   }
   if (moduleNameUpdated) {
@@ -80,18 +80,18 @@ void loop(){
     sendblueToothData(data);
     moduleStatusUpdated = false;
   }
-  
-//  if (moduleName = "") {
-//    Serial.println("No name recevied!");
-//    sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_NAME);
-//    Serial.println("Name requested");
-//  }
-//  if (moduleCreator = "") {
-//    Serial.println("No creator recevied!");
-//    sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_CREATOR);
-//    Serial.println("Creator requested");
-//  }
-  
+
+  //  if (moduleName = "") {
+  //    Serial.println("No name recevied!");
+  //    sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_NAME);
+  //    Serial.println("Name requested");
+  //  }
+  //  if (moduleCreator = "") {
+  //    Serial.println("No creator recevied!");
+  //    sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_CREATOR);
+  //    Serial.println("Creator requested");
+  //  }
+
 }
 
 void setPinMode() {
@@ -106,28 +106,50 @@ void setPinMode() {
 
 void getBlueToothData() {
   if (blueTooth.available()) { // data received from smartphone
+    //    Serial.println("received");
+    // int size = 0;
+    // blueToothBuffer[size] = blueTooth.read();
+    // size++;
+    // if (blueToothBuffer[0] = MOBILE_START_TRANSMIT) {
+    //   while (blueTooth.available()) {
+    //     blueToothBuffer[size] = blueTooth.read();
+    //     if (blueToothBuffer[size] = MOBILE_END_TRANSMIT) {
+    //       break;
+    //     }
+    //     size++;
+    //   }
+    //   if (blueToothBuffer[1] == ROBOT_DATA_JOYSTICK_CONTROL) { //joystick Control
+    //     Serial.print("Joystick Control received: ");
+    //     setRobotControl(blueToothBuffer);
+    //   }
+    //   if ((blueToothBuffer[1] == DATA_TYPE_REQUEST || blueToothBuffer[1] == MODULE_DATA_MODULE_ACTION ) && size == 4) { //Module Control
+    //     sendModuleRequest(blueToothBuffer[1], blueToothBuffer[2]);
+    //   }
+    // }
+
+    Serial.print("Bluetooth recevied Data: ");
     int size = 0;
-    blueToothBuffer[size] = blueTooth.read();
-    if (blueToothBuffer[0] = MOBILE_START_TRANSMIT){
-      while (blueTooth.available()) {
-        blueToothBuffer[size] = blueTooth.read();
-        if (blueToothBuffer[size] = MOBILE_END_TRANSMIT) {
-          break;
-        }
-        size++;
-      }
-      if (blueToothBuffer[1] == ROBOT_DATA_JOYSTICK_CONTROL && size == 8) { //joystick Control
-        Serial.print("Joystick Control received: ");
-        setRobotControl(blueToothBuffer);
-      }
-      if ((blueToothBuffer[1] == DATA_TYPE_REQUEST || blueToothBuffer[1] == MODULE_DATA_MODULE_ACTION ) && size == 4) { //Module Control
-        sendModuleRequest(blueToothBuffer[1], blueToothBuffer[2]);
+    while(blueTooth.available()){
+      blueToothBuffer[size] = (char)blueTooth.read();
+      Serial.print(blueToothBuffer[size]);
+      size++;
+      if (blueToothBuffer[size] == MOBILE_END_TRANSMIT){
+        break;
       }
     }
+    Serial.print("\n");
+    if (blueToothBuffer[0] != MOBILE_START_TRANSMIT) {
+      return;
+    }
+    if (blueToothBuffer[1] == ROBOT_DATA_JOYSTICK_CONTROL) {
+      Serial.print("Joystick Control received: ");
+      setRobotControl(blueToothBuffer);
+    }
+    if ((blueToothBuffer[1] == DATA_TYPE_REQUEST || blueToothBuffer[1] == MODULE_DATA_MODULE_ACTION ) && size == 4) { //Module Control
+      sendModuleRequest(blueToothBuffer[1], blueToothBuffer[2]);
+    }    
   }
-  while(blueTooth.available()){
-    blueTooth.read();
-  }
+ 
 }
 
 void sendblueToothData(String data) { //TODO:
@@ -144,7 +166,7 @@ void sendblueToothData(String data) { //TODO:
 void setRobotControl(byte data[8]) {
   int angle     = (data[1] - 48) * 100 + (data[2] - 48) * 10 + (data[3] - 48); // obtain the Int from the ASCII representation
   int amplitube = (data[4] - 48) * 100 + (data[5] - 48) * 10 + (data[6] - 48);
-  
+
   Serial.print("Angle: ");
   Serial.print(angle);
   Serial.print(" Amplitube: ");
