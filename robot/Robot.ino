@@ -11,7 +11,7 @@
 #define RIGHT_MOTOR 11
 
 //blueTooth Communication
-#define BLUE_TOOTH_BAUDRATE 38400
+#define BLUE_TOOTH_BAUDRATE 9600
 #define BLUE_TOOTH_TX 2
 #define BLUE_TOOTH_RX 3
 
