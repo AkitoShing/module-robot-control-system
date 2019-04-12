@@ -1,6 +1,7 @@
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #include <Data.h>
+#include "timer.h"
 
 //H-bridge
 #define HBRIDGE_IN1 8
@@ -10,13 +11,15 @@
 #define HBRIDGE_IN4 13
 #define RIGHT_MOTOR 11
 
-//blueTooth Communication
-#define BLUE_TOOTH_BAUDRATE 38400
+//blueTooth Communi cation
+#define BLUE_TOOTH_BAUDRATE 9600
 #define BLUE_TOOTH_TX 2
 #define BLUE_TOOTH_RX 3
 
+Timer routine;
+
 SoftwareSerial blueTooth(BLUE_TOOTH_TX, BLUE_TOOTH_RX);
-byte blueToothBuffer[8]  = {0, 0, 0, 0, 0, 0, 0, 0};        //Empty blueToothBuffer for data communication
+byte blueToothBuffer[9]  = {0, 0, 0, 0, 0, 0, 0, 0, 0};        //Empty blueToothBuffer for data communication
 String blueToothData = "";
 
 String robotStatus = "";                                    //Status of robot
@@ -27,7 +30,7 @@ String moduleName = "";                                     //The name of attach
 bool moduleNameUpdated = false;
 String moduleCreator = "";                                  //The creatot of attached module
 bool moduleCreatorUpdated = false;
-
+  
 void setup() {
   setPinMode();
 
@@ -37,6 +40,10 @@ void setup() {
 
   Wire.begin(MASTER_ADDRESS);
   Wire.onReceive(ResponeReceived);
+
+  routine.setInterval(1000);
+  routine.setCallback(routineTask);
+  routine.start();
 
   if (moduleEnabled()) {
     Serial.println("Module Detacted ");
@@ -48,14 +55,7 @@ void setup() {
 
 void loop() {
   getBlueToothData();
-  if (!moduleEnabled()) {
-    String data = "";
-    data = MODULE_DATA_MODULE_INFO;
-    data += MODULE_DATA_MODULE_STATUS;
-    data += MODULE_DATA_MODULE_STATUS_MODULE_DISABLE;
-    //    sendblueToothData(data);
-    Serial.println(data);
-  }
+  
   if (moduleNameUpdated) {
     String data = "";
     data += MODULE_DATA_MODULE_INFO;
@@ -80,18 +80,6 @@ void loop() {
     sendblueToothData(data);
     moduleStatusUpdated = false;
   }
-
-  //  if (moduleName = "") {
-  //    Serial.println("No name recevied!");
-  //    sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_NAME);
-  //    Serial.println("Name requested");
-  //  }
-  //  if (moduleCreator = "") {
-  //    Serial.println("No creator recevied!");
-  //    sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_CREATOR);
-  //    Serial.println("Creator requested");
-  //  }
-
 }
 
 void setPinMode() {
@@ -141,7 +129,7 @@ void getBlueToothData() {
     if (blueToothBuffer[0] != MOBILE_START_TRANSMIT) {
       return;
     }
-    if (blueToothBuffer[1] == ROBOT_DATA_JOYSTICK_CONTROL) {
+    if (blueToothBuffer[1] == 38) {
       Serial.print("Joystick Control received: ");
       setRobotControl(blueToothBuffer);
     }
@@ -163,9 +151,9 @@ void sendblueToothData(String data) { //TODO:
   delay(2);
 }
 
-void setRobotControl(byte data[8]) {
-  int angle     = (data[1] - 48) * 100 + (data[2] - 48) * 10 + (data[3] - 48); // obtain the Int from the ASCII representation
-  int amplitube = (data[4] - 48) * 100 + (data[5] - 48) * 10 + (data[6] - 48);
+void setRobotControl(byte data[9]) {
+  int angle     = (data[2] - 48) * 100 + (data[3] - 48) * 10 + (data[4] - 48); // obtain the Int from the ASCII representation
+  int amplitube = (data[5] - 48) * 100 + (data[6] - 48) * 10 + (data[7] - 48);
 
   Serial.print("Angle: ");
   Serial.print(angle);
@@ -303,4 +291,25 @@ void requestModuleStatus() {
 
 bool moduleEnabled() {
   return digitalRead(MODULE_ENABLE_PIN);
+}
+
+void routineTask(){
+  if (!moduleEnabled()) { //TODO: add timeout to this condition
+    String data = "";
+    data = MODULE_DATA_MODULE_INFO;
+    data += MODULE_DATA_MODULE_STATUS;
+    data += MODULE_DATA_MODULE_STATUS_MODULE_DISABLE;
+    sendblueToothData(data);
+    Serial.println(data);
+  }
+  if (moduleName = "") {
+    Serial.println("No name recevied!");
+    sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_NAME);
+    Serial.println("Name requested");
+  }
+  if (moduleCreator = "") {
+    Serial.println("No creator recevied!");
+    sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_CREATOR);
+    Serial.println("Creator requested");
+  }
 }
