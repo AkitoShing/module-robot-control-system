@@ -130,7 +130,6 @@ void getBlueToothData() {
       return;
     }
     if (blueToothBuffer[1] == 38) {
-      Serial.print("Joystick Control received: ");
       setRobotControl(blueToothBuffer);
     }
     if ((blueToothBuffer[1] == DATA_TYPE_REQUEST || blueToothBuffer[1] == MODULE_DATA_MODULE_ACTION ) && size == 4) { //Module Control
@@ -154,7 +153,8 @@ void sendblueToothData(String data) { //TODO:
 void setRobotControl(byte data[9]) {
   int angle     = (data[2] - 48) * 100 + (data[3] - 48) * 10 + (data[4] - 48); // obtain the Int from the ASCII representation
   int amplitube = (data[5] - 48) * 100 + (data[6] - 48) * 10 + (data[7] - 48);
-
+  
+  Serial.print("Joystick Control received: ");
   Serial.print("Angle: ");
   Serial.print(angle);
   Serial.print(" Amplitube: ");
