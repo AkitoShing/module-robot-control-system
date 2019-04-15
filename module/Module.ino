@@ -1,6 +1,7 @@
 #include <Data.h>
 #include "Wire.h"
 #include "SoftwareSerial.h"
+#include "timer.h"
 
 #define MODULE_NAME "Test Module 1"
 #define MODULE_CREATOR "Li Kwok Shing"
@@ -18,6 +19,8 @@ bool attackReady = true;
 int attackTimeout = 3000;
 unsigned long time_now = 0;
 
+Timer stopMotor;
+
 char moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY ;
 
 void setup() {
@@ -26,6 +29,9 @@ void setup() {
   pinMode(2, OUTPUT);
   pinMode(3, OUTPUT);
   pinMode(MODULE_ENABLE_PIN, OUTPUT);
+
+  stopMotor.setTimeout(1000);
+  stopMotor.setCallback(stop_L9110S);
 
   Wire.begin(SLAVE_ADDRESS);
   Wire.onReceive(actionReceived);
@@ -184,8 +190,9 @@ void control_L9110S_attack(){
   analogWrite(L9110S_A_1B, LOW);
   analogWrite(L9110S_B_1A, HIGH);
   analogWrite(L9110S_B_1B, LOW);
-  delay(2000);    // delay time need to be changed
-  stop_L9110S();
+  // delay(2000);    // delay time need to be changed
+  // stop_L9110S();
+  stopMotor();
 }
 
 void control_L9110S_restore() {
@@ -193,8 +200,9 @@ void control_L9110S_restore() {
   analogWrite(L9110S_A_1B, HIGH);
   analogWrite(L9110S_B_1A, LOW);
   analogWrite(L9110S_B_1B, HIGH);
-  delay(2000);    // delay time need to be changed
-  stop_L9110S();
+  // delay(2000);    // delay time need to be changed
+  // stop_L9110S();
+  stopMotor();
 }
 
 void stop_L9110S() {
@@ -202,6 +210,6 @@ void stop_L9110S() {
   analogWrite(L9110S_A_1A,0);
   analogWrite(L9110S_B_1B,0);
   analogWrite(L9110S_B_1A,0);
-  delay(300); 
+  // delay(300); 
 }
 // @HoliIsADog

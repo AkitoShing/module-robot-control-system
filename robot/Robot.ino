@@ -55,31 +55,7 @@ void setup() {
 
 void loop() {
   getBlueToothData();
-  
-  if (moduleNameUpdated) {
-    String data = "";
-    data += MODULE_DATA_MODULE_INFO;
-    data += MODULE_DATA_MODULE_INFO_NAME;
-    data += moduleName;
-    sendblueToothData(data);
-    moduleNameUpdated = false;
-  }
-  if (moduleCreatorUpdated) {
-    String data = "";
-    data += MODULE_DATA_MODULE_INFO;
-    data += MODULE_DATA_MODULE_INFO_CREATOR;
-    data += moduleCreator;
-    sendblueToothData(data);
-    moduleCreatorUpdated = false;
-  }
-  if (moduleStatusUpdated) {
-    String data = "";
-    data = MODULE_DATA_MODULE_INFO;
-    data += MODULE_DATA_MODULE_STATUS;
-    data += moduleStatus;
-    sendblueToothData(data);
-    moduleStatusUpdated = false;
-  }
+  routine.update();
 }
 
 void setPinMode() {
@@ -94,31 +70,11 @@ void setPinMode() {
 
 void getBlueToothData() {
   if (blueTooth.available()) { // data received from smartphone
-    //    Serial.println("received");
-    // int size = 0;
-    // blueToothBuffer[size] = blueTooth.read();
-    // size++;
-    // if (blueToothBuffer[0] = MOBILE_START_TRANSMIT) {
-    //   while (blueTooth.available()) {
-    //     blueToothBuffer[size] = blueTooth.read();
-    //     if (blueToothBuffer[size] = MOBILE_END_TRANSMIT) {
-    //       break;
-    //     }
-    //     size++;
-    //   }
-    //   if (blueToothBuffer[1] == ROBOT_DATA_JOYSTICK_CONTROL) { //joystick Control
-    //     Serial.print("Joystick Control received: ");
-    //     setRobotControl(blueToothBuffer);
-    //   }
-    //   if ((blueToothBuffer[1] == DATA_TYPE_REQUEST || blueToothBuffer[1] == MODULE_DATA_MODULE_ACTION ) && size == 4) { //Module Control
-    //     sendModuleRequest(blueToothBuffer[1], blueToothBuffer[2]);
-    //   }
-    // }
-
     Serial.print("Bluetooth recevied Data: ");
     int size = 0;
     while(blueTooth.available()){
-      blueToothBuffer[size] = (char)blueTooth.read();
+      char c = blueTooth.read();
+      blueToothBuffer[size] = c;
       Serial.print(blueToothBuffer[size]);
       size++;
       if (blueToothBuffer[size] == MOBILE_END_TRANSMIT){
@@ -129,7 +85,7 @@ void getBlueToothData() {
     if (blueToothBuffer[0] != MOBILE_START_TRANSMIT) {
       return;
     }
-    if (blueToothBuffer[1] == 38) {
+    if (blueToothBuffer[1] == ROBOT_DATA_JOYSTICK_CONTROL) {
       setRobotControl(blueToothBuffer);
     }
     if ((blueToothBuffer[1] == DATA_TYPE_REQUEST || blueToothBuffer[1] == MODULE_DATA_MODULE_ACTION ) && size == 4) { //Module Control
@@ -311,5 +267,28 @@ void routineTask(){
     Serial.println("No creator recevied!");
     sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_CREATOR);
     Serial.println("Creator requested");
+  }  if (moduleNameUpdated) {
+    String data = "";
+    data += MODULE_DATA_MODULE_INFO;
+    data += MODULE_DATA_MODULE_INFO_NAME;
+    data += moduleName;
+    sendblueToothData(data);
+    moduleNameUpdated = false;
+  }
+  if (moduleCreatorUpdated) {
+    String data = "";
+    data += MODULE_DATA_MODULE_INFO;
+    data += MODULE_DATA_MODULE_INFO_CREATOR;
+    data += moduleCreator;
+    sendblueToothData(data);
+    moduleCreatorUpdated = false;
+  }
+  if (moduleStatusUpdated) {
+    String data = "";
+    data = MODULE_DATA_MODULE_INFO;
+    data += MODULE_DATA_MODULE_STATUS;
+    data += moduleStatus;
+    sendblueToothData(data);
+    moduleStatusUpdated = false;
   }
 }

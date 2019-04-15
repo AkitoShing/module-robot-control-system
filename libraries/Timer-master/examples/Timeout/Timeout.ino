@@ -14,11 +14,15 @@ Timer timer;
 //Set our awesome turn on led function
 void turnOnLed() {
   digitalWrite(led_pin, HIGH);
+  Serial.println("Turn On");
+  timer.start();
 }
 
 void setup()
 {
-  pinMode(led_pin, OUTPUT);
+  Serial.begin(115200);
+  Serial.println("start");
+  pinMode(led_pin, OUTPUT); 
 
   //The led will turn on after 3 seconds
   timer.setTimeout(3000);
