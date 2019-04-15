@@ -4,6 +4,10 @@
 
 #define MODULE_NAME "Test Module 1"
 #define MODULE_CREATOR "Li Kwok Shing"
+#define L9110S_A_1B 8
+#define L9110S_A_1A 9
+#define L9110S_B_1B 10
+#define L9110S_B_1A 11
 
 char requestType;
 char request;
@@ -17,6 +21,8 @@ unsigned long time_now = 0;
 char moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY ;
 
 void setup() {
+  setPinMode();
+
   pinMode(2, OUTPUT);
   pinMode(3, OUTPUT);
   pinMode(MODULE_ENABLE_PIN, OUTPUT);
@@ -48,6 +54,15 @@ void loop() {
     digitalWrite(3, HIGH);
   }
 }
+
+// @HoliIsADog
+void setPinMode() {
+  pinMode(L9110S_A_1B, OUTPUT);
+  pinMode(L9110S_A_1A, OUTPUT);
+  pinMode(L9110S_B_1B, OUTPUT);
+  pinMode(L9110S_B_1A, OUTPUT);
+}
+// @HoliIsADog
 
 void actionReceived(int count) { //onReceive
   requestType = Wire.read();
@@ -162,3 +177,31 @@ void moduleRight() {
 void moduleAttack() {
   Serial.println("Module Attack");
 }
+
+// @HoliIsADog
+void control_L9110S_attack(){
+  analogWrite(L9110S_A_1A, HIGH);
+  analogWrite(L9110S_A_1B, LOW);
+  analogWrite(L9110S_B_1A, HIGH);
+  analogWrite(L9110S_B_1B, LOW);
+  delay(2000);    // delay time need to be changed
+  stop_L9110S();
+}
+
+void control_L9110S_restore() {
+  analogWrite(L9110S_A_1A, LOW);
+  analogWrite(L9110S_A_1B, HIGH);
+  analogWrite(L9110S_B_1A, LOW);
+  analogWrite(L9110S_B_1B, HIGH);
+  delay(2000);    // delay time need to be changed
+  stop_L9110S();
+}
+
+void stop_L9110S() {
+  analogWrite(L9110S_A_1B,0);
+  analogWrite(L9110S_A_1A,0);
+  analogWrite(L9110S_B_1B,0);
+  analogWrite(L9110S_B_1A,0);
+  delay(300); 
+}
+// @HoliIsADog
