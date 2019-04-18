@@ -107,8 +107,8 @@ void sendblueToothData(String data) { //TODO:
 }
 
 void setRobotControl(byte data[9]) {
-  int angle     = (data[2] - 48) * 100 + (data[3] - 48) * 10 + (data[4] - 48); // obtain the Int from the ASCII representation
-  int amplitube = (data[5] - 48) * 100 + (data[6] - 48) * 10 + (data[7] - 48);
+  int angle     = (data[3] - 48) * 100 + (data[4] - 48) * 10 + (data[5] - 48); // obtain the Int from the ASCII representation
+  int amplitube = (data[6] - 48) * 100 + (data[7] - 48) * 10 + (data[8] - 48);
   
   Serial.print("Joystick Control received: ");
   Serial.print("Angle: ");
@@ -291,4 +291,8 @@ void routineTask(){
     sendblueToothData(data);
     moduleStatusUpdated = false;
   }
+}
+
+void asciiToChar(char asciiInt) {
+
 }
