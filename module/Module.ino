@@ -192,7 +192,7 @@ void control_L9110S_attack(){
   analogWrite(L9110S_B_1B, LOW);
   // delay(2000);    // delay time need to be changed
   // stop_L9110S();
-  stopMotor();
+  stopMotor.start();
 }
 
 void control_L9110S_restore() {
@@ -202,7 +202,7 @@ void control_L9110S_restore() {
   analogWrite(L9110S_B_1B, HIGH);
   // delay(2000);    // delay time need to be changed
   // stop_L9110S();
-  stopMotor();
+  stopMotor.start();
 }
 
 void stop_L9110S() {
