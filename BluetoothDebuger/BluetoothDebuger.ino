@@ -7,8 +7,8 @@ SoftwareSerial Bluetooth(BLUETOOTH_TX, BLUETOOTH_RX);
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(115400);
-  Bluetooth.begin(9600);
+  Serial.begin(115200);
+  Bluetooth.begin(38400);
 
   Serial.println("Bluetooth Debugger v0.0");
   Serial.println("Ready...");
@@ -17,15 +17,21 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   if (Bluetooth.available()) {
-    Serial.print((char)Bluetooth.read());
+    while (Bluetooth.available()) {
+      Serial.print((char)Bluetooth.read());
+    }
 
   }
 
   if (Serial.available()) {
-    Bluetooth.print((char)Serial.read());
+    //    int i = Serial.available();
+    //    Serial.print(i);
+    while (Serial.available()) {
+      char c = Serial.read();
+      Bluetooth.write(c);
+      Serial.print(c);
+    }
   }
 
-  if (Serial.available()) {
-    Serial.print((char)Serial.read());
-  }
+  delay(10);
 }
