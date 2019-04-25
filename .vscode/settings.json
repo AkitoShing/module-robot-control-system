@@ -1,5 +1,5 @@
 {
     "C_Cpp.intelliSenseEngineFallback": "Enabled",
-    "arduino.path": "'C:\\Program Files\\Arduino'",
+    "arduino.path": "'/Applications/Arduino.app/Contents/Resources/hardware/arduino/avr'",
     "arduino.defaultBaudRate": 9600
 }
