@@ -33,6 +33,8 @@ bool moduleNameUpdated = false;
 String moduleCreator = "";                                  //The creatot of attached module
 bool moduleCreatorUpdated = false;
 
+bool joystickModeXY = true;
+
 void setup() {
   setPinMode();
   digitalWrite(BLUETOOTH_POWER, HIGH);
@@ -104,12 +106,11 @@ void getBlueToothData() {
       setRobotControl(bluetoothBuffer);
     }
     if (bluetoothBuffer[0] == '<' && datasize == 4) { //Module Control
+      attack();
       sendModuleRequest('@', bluetoothBuffer[1]);
     }
   }
 }
-
-
 
 void sendBluetoothData(String data) { //TODO:
   String BluetoothData = "";
@@ -123,80 +124,137 @@ void sendBluetoothData(String data) { //TODO:
 }
 
 void setRobotControl(char data[8]) {
-  Serial.println("set Robot control");
-  int angle     = (data[1] - 48) * 100 + (data[2] - 48) * 10 + (data[3] - 48); // obtain the Int from the ASCII representation
-  int amplitube = (data[4] - 48) * 100 + (data[5] - 48) * 10 + (data[6] - 48);
+  if (joystickXY) {
+      int joystick_x = (data[1]-48)*100 + (data[2]-48)*10 + (data[3]-48);       // obtain the Int from the ASCII representation
+      int joystick_y = (data[4]-48)*100 + (data[5]-48)*10 + (data[6]-48);
+    
+      if(joystick_y < 0 || joystick_x > 255 || joystick_y < 0 || joystick_y > 255)     return;      // commmunication error
+    
+      joystick_x = map(joystick_x, 0, 200, -255.0, 255.0);
+      joystick_y = map(joystick_y, 200, 0, -255.0, 255.0);
+    
+      int leftThrottle = joystick_y + joystick_x;
+      int rightThrottle = joystick_y - joystick_x;
+    
+      float diff = abs( abs(joystick_y) - abs(joystick_x) );
+      leftThrottle = leftThrottle < 0 ? leftThrottle - diff : leftThrottle + diff;
+      rightThrottle = rightThrottle < 0 ? rightThrottle - diff : rightThrottle + diff;
+    
+      leftThrottle = map( leftThrottle, -512, 512, -255, 255);
+      rightThrottle = map( rightThrottle, -512, 512, -255, 255);
+    
+      //constrain
+      leftThrottle = constrain(leftThrottle, -255, 255);
+      rightThrottle = constrain(rightThrottle, -255, 255);
+    
+      if(leftThrottle > 0){
+        digitalWrite(HBRIDGE_IN1, HIGH);
+        digitalWrite(HBRIDGE_IN2, LOW);
+      }else{
+        digitalWrite(HBRIDGE_IN1, LOW);
+        digitalWrite(HBRIDGE_IN2, HIGH);
+      }
+      if(rightThrottle > 0){
+        digitalWrite(HBRIDGE_IN3, HIGH);
+        digitalWrite(HBRIDGE_IN4, LOW);
+      }else{
+        digitalWrite(HBRIDGE_IN3, LOW);
+        digitalWrite(HBRIDGE_IN4, HIGH);
+      }
+    
+      leftThrottle = abs(leftThrottle);
+      rightThrottle = abs(rightThrottle);
+    
+      // Prevent buzzing at low speeds (Adjust according to your motors.
+      if (leftThrottle < 10) {
+        leftThrottle = 0;
+      }
+      if (rightThrottle < 10) {
+        rightThrottle = 0;
+      }
+    
+      analogWrite(LEFT_MOTOR, leftThrottle); // Send PWM signal to motor A
+      analogWrite(RIGHT_MOTOR, rightThrottle); // Send PWM signal to motor B
+    
+      Serial.print("Joystick position:  ");
+      Serial.print(joystick_x);
+      Serial.print(", ");
+      Serial.println(joystick_y);
+  } else {
+    Serial.println("set Robot control");
+    int angle     = (data[1] - 48) * 100 + (data[2] - 48) * 10 + (data[3] - 48); // obtain the Int from the ASCII representation
+    int amplitube = (data[4] - 48) * 100 + (data[5] - 48) * 10 + (data[6] - 48);
 
-  Serial.print("Joystick Control received: ");
-  Serial.print("Angle: ");
-  Serial.print(angle);
-  Serial.print(" Amplitube: ");
-  Serial.println(amplitube);
+    Serial.print("Joystick Control received: ");
+    Serial.print("Angle: ");
+    Serial.print(angle);
+    Serial.print(" Amplitube: ");
+    Serial.println(amplitube);
 
-  if (angle < 0 || angle > 360 || amplitube < 0 || amplitube > 100) {
-    return; //Data Error
+    if (angle < 0 || angle > 360 || amplitube < 0 || amplitube > 255) {
+      return; //Data Error
+    }
+
+    byte leftMix;
+    byte rightMix;
+
+    if (angle > 170 && angle < 190) {
+      // Serial.print("Left spin ");
+      digitalWrite(HBRIDGE_IN1, LOW);
+      digitalWrite(HBRIDGE_IN2, HIGH);
+      digitalWrite(HBRIDGE_IN3, HIGH);
+      digitalWrite(HBRIDGE_IN4, LOW);
+      leftMix = 255;
+      rightMix = 255;
+    }
+    if (angle >= 0 && angle < 11 || angle > 350 && angle < 360) {
+      // Serial.print("Right spin");
+      digitalWrite(HBRIDGE_IN1, HIGH);
+      digitalWrite(HBRIDGE_IN2, LOW);
+      digitalWrite(HBRIDGE_IN3, LOW);
+      digitalWrite(HBRIDGE_IN4, HIGH);
+      leftMix = 255;
+      rightMix = 255;
+    }
+    if (angle > 10 && angle < 171) {
+      // Serial.print("Forward ");
+      digitalWrite(HBRIDGE_IN1, HIGH);
+      digitalWrite(HBRIDGE_IN2, LOW);
+      digitalWrite(HBRIDGE_IN3, HIGH);
+      digitalWrite(HBRIDGE_IN4, LOW);
+      leftMix = map(angle, 90, 170, 255, 0);
+      if (angle < 90) leftMix = 255;
+      rightMix = map(angle, 11, 90, 0, 255);
+      if (angle > 90) rightMix = 255;
+    }
+    if (angle > 189 && angle < 351) {
+      // Serial.print("Backward ");
+      digitalWrite(HBRIDGE_IN1, LOW);
+      digitalWrite(HBRIDGE_IN2, HIGH);
+      digitalWrite(HBRIDGE_IN3, LOW);
+      digitalWrite(HBRIDGE_IN4, HIGH);
+      leftMix = map(angle, 270, 351, 0, 255);
+      if (angle > 270) leftMix = 255;
+      rightMix = map(angle, 189, 270, 255, 0);
+      if (angle < 270) rightMix = 255;
+    }
+
+    Serial.print("Left Motor Mix: ");
+    Serial.print(leftMix);
+    Serial.print(" Right Motor Mix: ");
+    Serial.println(rightMix);
+
+    float leftMotorPower = ((float)leftMix * (float)amplitube) / (float)255;
+    float rightMotorPower = ((float)rightMix * (float)amplitube) / (float)255;
+
+    Serial.print("Left Motor Power: ");
+    Serial.print((float)leftMotorPower);
+    Serial.print(" Right Motor Power: ");
+    Serial.println((float)rightMotorPower);
+
+    analogWrite(LEFT_MOTOR, (float)leftMotorPower);
+    analogWrite(RIGHT_MOTOR, (float)rightMotorPower);
   }
-
-  byte leftMix;
-  byte rightMix;
-
-  if (angle > 170 && angle < 190) {
-    // Serial.print("Left spin ");
-    digitalWrite(HBRIDGE_IN1, LOW);
-    digitalWrite(HBRIDGE_IN2, HIGH);
-    digitalWrite(HBRIDGE_IN3, HIGH);
-    digitalWrite(HBRIDGE_IN4, LOW);
-    leftMix = 255;
-    rightMix = 255;
-  }
-  if (angle >= 0 && angle < 11 || angle > 350 && angle < 360) {
-    // Serial.print("Right spin");
-    digitalWrite(HBRIDGE_IN1, HIGH);
-    digitalWrite(HBRIDGE_IN2, LOW);
-    digitalWrite(HBRIDGE_IN3, LOW);
-    digitalWrite(HBRIDGE_IN4, HIGH);
-    leftMix = 255;
-    rightMix = 255;
-  }
-  if (angle > 10 && angle < 171) {
-    // Serial.print("Forward ");
-    digitalWrite(HBRIDGE_IN1, HIGH);
-    digitalWrite(HBRIDGE_IN2, LOW);
-    digitalWrite(HBRIDGE_IN3, HIGH);
-    digitalWrite(HBRIDGE_IN4, LOW);
-    if (angle < 90) leftMix = 255;
-    leftMix = map(angle, 90, 170, 255, 0);
-    if (angle > 90) rightMix = 255;
-    rightMix = map(angle, 11, 90, 0, 255);
-  }
-  if (angle > 189 && angle < 351) {
-    // Serial.print("Backward ");
-    digitalWrite(HBRIDGE_IN1, LOW);
-    digitalWrite(HBRIDGE_IN2, HIGH);
-    digitalWrite(HBRIDGE_IN3, LOW);
-    digitalWrite(HBRIDGE_IN4, HIGH);
-    if (angle < 270) leftMix = 255;
-    leftMix = map(angle, 270, 351, 255, 0);
-    if (angle > 270) rightMix = 255;
-    rightMix = map(angle, 189, 270, 0, 255);
-  }
-
-  Serial.print("Left Motor Mix: ");
-  Serial.print(leftMix);
-  Serial.print(" Right Motor Mix: ");
-  Serial.println(rightMix);
-
-  //TODO: Test the new calculation
-  int leftMotorPower = (leftMix * amplitube) / 100;
-  int rightMotorPower = (rightMix * amplitube) / 100;
-
-  Serial.print("Left Motor Power: ");
-  Serial.print(leftMotorPower);
-  Serial.print(" Right Motor Power: ");
-  Serial.println(rightMotorPower);
-
-  analogWrite(LEFT_MOTOR, leftMotorPower);
-  analogWrite(RIGHT_MOTOR, rightMotorPower);
 }
 
 void sendModuleRequest(char requestType, char controlChar) {
@@ -313,6 +371,6 @@ void routineTask() {
   }
 }
 
-void asciiToChar(char asciiInt) {
+void attack() {
 
 }
