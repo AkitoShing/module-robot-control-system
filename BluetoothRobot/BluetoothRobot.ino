@@ -1,7 +1,7 @@
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #include <Data.h>
-#include "timer.h"
+#include <timer.h>
 
 //H-bridge
 #define HBRIDGE_IN1 8
@@ -33,7 +33,7 @@ bool moduleNameUpdated = false;
 String moduleCreator = "";                                  //The creatot of attached module
 bool moduleCreatorUpdated = false;
 
-bool joystickModeXY = true;
+bool joystickModeXY = false;
 
 void setup() {
   setPinMode();
@@ -105,8 +105,7 @@ void getBlueToothData() {
     if (bluetoothBuffer[0] == '{' && datasize == 8) {
       setRobotControl(bluetoothBuffer);
     }
-    if (bluetoothBuffer[0] == '<' && datasize == 4) { //Module Control
-      attack();
+    if (bluetoothBuffer[0] == '<' && datasize == 3) { //Module Control
       sendModuleRequest('@', bluetoothBuffer[1]);
     }
   }
@@ -124,62 +123,62 @@ void sendBluetoothData(String data) { //TODO:
 }
 
 void setRobotControl(char data[8]) {
-  if (joystickXY) {
-      int joystick_x = (data[1]-48)*100 + (data[2]-48)*10 + (data[3]-48);       // obtain the Int from the ASCII representation
-      int joystick_y = (data[4]-48)*100 + (data[5]-48)*10 + (data[6]-48);
-    
-      if(joystick_y < 0 || joystick_x > 255 || joystick_y < 0 || joystick_y > 255)     return;      // commmunication error
-    
-      joystick_x = map(joystick_x, 0, 200, -255.0, 255.0);
-      joystick_y = map(joystick_y, 200, 0, -255.0, 255.0);
-    
-      int leftThrottle = joystick_y + joystick_x;
-      int rightThrottle = joystick_y - joystick_x;
-    
-      float diff = abs( abs(joystick_y) - abs(joystick_x) );
-      leftThrottle = leftThrottle < 0 ? leftThrottle - diff : leftThrottle + diff;
-      rightThrottle = rightThrottle < 0 ? rightThrottle - diff : rightThrottle + diff;
-    
-      leftThrottle = map( leftThrottle, -512, 512, -255, 255);
-      rightThrottle = map( rightThrottle, -512, 512, -255, 255);
-    
-      //constrain
-      leftThrottle = constrain(leftThrottle, -255, 255);
-      rightThrottle = constrain(rightThrottle, -255, 255);
-    
-      if(leftThrottle > 0){
-        digitalWrite(HBRIDGE_IN1, HIGH);
-        digitalWrite(HBRIDGE_IN2, LOW);
-      }else{
-        digitalWrite(HBRIDGE_IN1, LOW);
-        digitalWrite(HBRIDGE_IN2, HIGH);
-      }
-      if(rightThrottle > 0){
-        digitalWrite(HBRIDGE_IN3, HIGH);
-        digitalWrite(HBRIDGE_IN4, LOW);
-      }else{
-        digitalWrite(HBRIDGE_IN3, LOW);
-        digitalWrite(HBRIDGE_IN4, HIGH);
-      }
-    
-      leftThrottle = abs(leftThrottle);
-      rightThrottle = abs(rightThrottle);
-    
-      // Prevent buzzing at low speeds (Adjust according to your motors.
-      if (leftThrottle < 10) {
-        leftThrottle = 0;
-      }
-      if (rightThrottle < 10) {
-        rightThrottle = 0;
-      }
-    
-      analogWrite(LEFT_MOTOR, leftThrottle); // Send PWM signal to motor A
-      analogWrite(RIGHT_MOTOR, rightThrottle); // Send PWM signal to motor B
-    
-      Serial.print("Joystick position:  ");
-      Serial.print(joystick_x);
-      Serial.print(", ");
-      Serial.println(joystick_y);
+  if (joystickModeXY) {
+    int joystick_x = (data[1] - 48) * 100 + (data[2] - 48) * 10 + (data[3] - 48); // obtain the Int from the ASCII representation
+    int joystick_y = (data[4] - 48) * 100 + (data[5] - 48) * 10 + (data[6] - 48);
+
+    if (joystick_y < 0 || joystick_x > 255 || joystick_y < 0 || joystick_y > 255)     return;     // commmunication error
+
+    joystick_x = map(joystick_x, 0, 255, -255.0, 255.0);
+    joystick_y = map(joystick_y, 255, 0, -255.0, 255.0);
+
+    int leftThrottle = joystick_y + joystick_x;
+    int rightThrottle = joystick_y - joystick_x;
+
+    float diff = abs( abs(joystick_y) - abs(joystick_x) );
+    leftThrottle = leftThrottle < 0 ? leftThrottle - diff : leftThrottle + diff;
+    rightThrottle = rightThrottle < 0 ? rightThrottle - diff : rightThrottle + diff;
+
+    leftThrottle = map( leftThrottle, -512, 512, -255, 255);
+    rightThrottle = map( rightThrottle, -512, 512, -255, 255);
+
+    //constrain
+    leftThrottle = constrain(leftThrottle, -255, 255);
+    rightThrottle = constrain(rightThrottle, -255, 255);
+
+    if (leftThrottle > 0) {
+      digitalWrite(HBRIDGE_IN1, HIGH);
+      digitalWrite(HBRIDGE_IN2, LOW);
+    } else {
+      digitalWrite(HBRIDGE_IN1, LOW);
+      digitalWrite(HBRIDGE_IN2, HIGH);
+    }
+    if (rightThrottle > 0) {
+      digitalWrite(HBRIDGE_IN3, HIGH);
+      digitalWrite(HBRIDGE_IN4, LOW);
+    } else {
+      digitalWrite(HBRIDGE_IN3, LOW);
+      digitalWrite(HBRIDGE_IN4, HIGH);
+    }
+
+    leftThrottle = abs(leftThrottle);
+    rightThrottle = abs(rightThrottle);
+
+    // Prevent buzzing at low speeds (Adjust according to your motors.
+    if (leftThrottle < 10) {
+      leftThrottle = 0;
+    }
+    if (rightThrottle < 10) {
+      rightThrottle = 0;
+    }
+
+    analogWrite(LEFT_MOTOR, leftThrottle); // Send PWM signal to motor A
+    analogWrite(RIGHT_MOTOR, rightThrottle); // Send PWM signal to motor B
+
+    Serial.print("Joystick position:  ");
+    Serial.print(joystick_x);
+    Serial.print(", ");
+    Serial.println(joystick_y);
   } else {
     Serial.println("set Robot control");
     int angle     = (data[1] - 48) * 100 + (data[2] - 48) * 10 + (data[3] - 48); // obtain the Int from the ASCII representation
@@ -369,8 +368,4 @@ void routineTask() {
     sendBluetoothData(data);
     moduleStatusUpdated = false;
   }
-}
-
-void attack() {
-
 }
