@@ -1,8 +1,7 @@
 {
     "port": "COM4",
-    "board": "arduino:avr:nano",
-    "programmer": "Arduino as ISP",
+    "board": "arduino:avr:uno",
+    "programmer": "AVRISP mkII",
     "sketch": "robot\\robot.ino",
-    "output": "../build",
-    "configuration": "cpu=atmega328old"
+    "output": "../build"
 }

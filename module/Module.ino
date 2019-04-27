@@ -5,6 +5,7 @@
 
 #define MODULE_NAME "Test Module 1"
 #define MODULE_CREATOR "Li Kwok Shing"
+
 #define L9110S_A_1B 8
 #define L9110S_A_1A 9
 #define L9110S_B_1B 10
