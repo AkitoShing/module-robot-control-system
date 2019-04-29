@@ -32,4 +32,4 @@
 #define SLAVE_ADDRESS 42
 #define WIRE_DATA_SIZE 2
 
-#define MODULE_ENABLE_PIN 4
+#define MODULE_ENABLE_PIN 7

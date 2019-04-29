@@ -35,7 +35,7 @@ void setup() {
   stopMotor.setCallback(stop_L9110S);
 
   Wire.begin(SLAVE_ADDRESS);
-  Wire.onReceive(actionReceived);
+  Wire.onReceive(requestReceived);
   Serial.begin(115200);
 
   Serial.print("Module Name: ");
@@ -71,7 +71,7 @@ void setPinMode() {
 }
 // @HoliIsADog
 
-void actionReceived(int count) { //onReceive
+void requestReceived(int count) { //onReceive
   requestType = Wire.read();
   request = Wire.read();
   while (Wire.available()) Wire.read();

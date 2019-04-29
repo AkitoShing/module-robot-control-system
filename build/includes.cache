@@ -1,0 +1,62 @@
+[
+  {
+    "Sourcefile": "",
+    "Include": "",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/cores/arduino"
+  },
+  {
+    "Sourcefile": "",
+    "Include": "",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/variants/standard"
+  },
+  {
+    "Sourcefile": "/Users/akitoshing/Documents/GitHub/module-robot-control-system/build/sketch/Data.h.cpp",
+    "Include": "SoftwareSerial.h",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/SoftwareSerial/src"
+  },
+  {
+    "Sourcefile": "/Users/akitoshing/Documents/GitHub/module-robot-control-system/build/sketch/Data.h.cpp",
+    "Include": "Wire.h",
+    "Includepath": "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/Wire/src"
+  },
+  {
+    "Sourcefile": "/Users/akitoshing/Documents/GitHub/module-robot-control-system/build/sketch/Data.h.cpp",
+    "Include": "Data.h",
+    "Includepath": "/Users/akitoshing/Documents/Arduino/libraries/ModuleRobotSystem"
+  },
+  {
+    "Sourcefile": "/Users/akitoshing/Documents/GitHub/module-robot-control-system/build/sketch/Data.h.cpp",
+    "Include": "timer.h",
+    "Includepath": "/Users/akitoshing/Documents/Arduino/libraries/Timer-master"
+  },
+  {
+    "Sourcefile": "/Users/akitoshing/Documents/GitHub/module-robot-control-system/build/sketch/Data.h.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/SoftwareSerial/src/SoftwareSerial.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/Wire/src/Wire.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Applications/Arduino.app/Contents/Java/hardware/arduino/avr/libraries/Wire/src/utility/twi.c",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Users/akitoshing/Documents/Arduino/libraries/Timer-master/timer.cpp",
+    "Include": "",
+    "Includepath": ""
+  },
+  {
+    "Sourcefile": "/Users/akitoshing/Documents/Arduino/libraries/Timer-master/timerManager.cpp",
+    "Include": "",
+    "Includepath": ""
+  }
+]
