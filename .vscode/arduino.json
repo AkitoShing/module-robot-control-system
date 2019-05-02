@@ -1,7 +1,7 @@
 {
-    "port": "COM4",
+    "port": "/dev/cu.usbmodem142301",
     "board": "arduino:avr:uno",
     "programmer": "AVRISP mkII",
-    "sketch": "robot\\robot.ino",
+    "sketch": "Robot/Robot.ino",
     "output": "../build"
 }

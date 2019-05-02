@@ -1,7 +1,7 @@
+#include <SoftwareSerial.h>
+#include <Wire.h>
 #include <Data.h>
-#include "Wire.h"
-#include "SoftwareSerial.h"
-#include "timer.h"
+#include <timer.h>
 
 #define MODULE_NAME "Test Module 1"
 #define MODULE_CREATOR "Li Kwok Shing"
