@@ -22,7 +22,7 @@ Timer routine;
 Timer recevier;
 
 SoftwareSerial Bluetooth(BLUETOOTH_TX, BLUETOOTH_RX);
-char bluetoothBuffer[8];        //Empty bluetoothBuffer for data communication
+char bluetoothBuffer[9];        //Empty bluetoothBuffer for data communication
 String BluetoothData = "";
 
 String robotStatus = "";                                    //Status of robot
@@ -86,19 +86,16 @@ void getBlueToothData() {
     delay(2);
     bluetoothBuffer[datasize] = Bluetooth.read();
     datasize++;
-    if (bluetoothBuffer[0] == '{' ||
-        bluetoothBuffer[0] == '(' ||
-        bluetoothBuffer[0] == '<' ) {
+    if (bluetoothBuffer[0] == '{') {
       while (Bluetooth.available())  {
         delay(1);
         bluetoothBuffer[datasize] = Bluetooth.read();
         datasize++;
-        if (bluetoothBuffer[datasize] > 127 || datasize > 8) {
+        if (bluetoothBuffer[datasize] > 127 || datasize > 9) {
+          Serial.println("Communication error");
           break;     // Communication error
         }
-        if (bluetoothBuffer[datasize - 1] == '}' ||
-            bluetoothBuffer[datasize - 1] == ')' ||
-            bluetoothBuffer[datasize - 1] == '>') {
+        if (bluetoothBuffer[datasize - 1] == '}') {
           break;     // Finish receive
         }
       }
@@ -107,11 +104,11 @@ void getBlueToothData() {
       Serial.print((char)bluetoothBuffer[pointer]);
     }
     Serial.print("\n");
-    if (bluetoothBuffer[0] == '{' && datasize == 8) {
+    if (bluetoothBuffer[1] == '&' && datasize == 9) {
       setRobotControl(bluetoothBuffer);
     }
-    if (bluetoothBuffer[0] == '<' && datasize == 3) { //Module Control
-      sendModuleRequest('@', bluetoothBuffer[1]);
+    if (bluetoothBuffer[1] == '@' && datasize == 4) { //Module Control
+      sendModuleRequest('@', bluetoothBuffer[2]);
     }
   }
 }
@@ -127,15 +124,15 @@ void sendBluetoothData(String data) { //TODO:
   delay(2);
 }
 
-void setRobotControl(char data[8]) {  
+void setRobotControl(char data[9]) {  
   byte leftMix;
   byte rightMix;
 
   float leftMotorPower;
   float rightMotorPower;
 
-  int XorAngle = (data[1] - 48) * 100 + (data[2] - 48) * 10 + (data[3] - 48);
-  int YorAmplitude = (data[4] - 48) * 100 + (data[5] - 48) * 10 + (data[6] - 48);
+  int XorAngle = (data[2] - 48) * 100 + (data[3] - 48) * 10 + (data[4] - 48);
+  int YorAmplitude = (data[5] - 48) * 100 + (data[6] - 48) * 10 + (data[7] - 48);
   
   Serial.print("Joystick Control received: ");
   Serial.print("X / Angle: ");

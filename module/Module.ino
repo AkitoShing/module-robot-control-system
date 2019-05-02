@@ -23,6 +23,7 @@ unsigned long time_now = 0;
 Timer stopMotor;
 
 char moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY ;
+bool moduleStatusUpdated = false;
 
 void setup() {
   setPinMode();
@@ -52,6 +53,10 @@ void loop() {
   if (!responsed) {
     response(responseWith);
     responsed = !responsed;
+  } 
+  if (moduleStatusUpdated) {
+    response(MODULE_DATA_MODULE_STATUS);
+    moduleStatusUpdated = false;
   }
   if(moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY){
     digitalWrite(2, HIGH);
@@ -153,10 +158,12 @@ void getModuleControl(char control) { //
         if (millis() - time_now > attackTimeout) {
           attackReady = true;
           moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY;
+          moduleStatusUpdated = true;
           Serial.println("Attack ready");
         } else {
           moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_CD;
           Serial.println("Attack CD");
+          moduleStatusUpdated = true;
         }
       }
       break;
@@ -174,7 +181,7 @@ void moduleDown() {
 }
 
 void moduleLeft() {
-  Serial.println("Module left");
+  Serial.println("Module Left");
 }
 
 void moduleRight() {
