@@ -20,6 +20,8 @@ bool attackReady = true;
 int attackTimeout = 3000;
 unsigned long time_now = 0;
 
+Timer cd;
+Timer waeponRestore;
 Timer stopMotor;
 
 char moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY ;
@@ -35,13 +37,19 @@ void setup() {
   stopMotor.setTimeout(1000);
   stopMotor.setCallback(stop_L9110S);
 
+  cd.setTimeout(3000);
+  cd.setCallback(cdEnd);
+
+  waeponRestore.setTimeout(500);
+  waeponRestore.setCallback(moduleRestore);
+
   Wire.begin(SLAVE_ADDRESS);
   Wire.onReceive(requestReceived);
   Serial.begin(115200);
 
   Serial.print("Module Name: ");
   Serial.println(MODULE_NAME);
-  Serial.print("Module Creator: ");  
+  Serial.print("Module Creator: ");
   Serial.println(MODULE_CREATOR);
   delay(10);
   Serial.println("Setup Finish......");
@@ -50,31 +58,32 @@ void setup() {
 }
 
 void loop() {
+  stopMotor.update();
+  cd.update();
+  waeponRestore.update();
   if (!responsed) {
     response(responseWith);
     responsed = !responsed;
-  } 
+  }
   if (moduleStatusUpdated) {
-    response(MODULE_DATA_MODULE_STATUS);
+    sendModuleStatus(moduleStatus);
     moduleStatusUpdated = false;
   }
-  if(moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY){
+  if (moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY) {
     digitalWrite(2, HIGH);
     digitalWrite(3, LOW);
-  }else if(moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_CD){
+  } else if (moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_CD) {
     digitalWrite(2, LOW);
     digitalWrite(3, HIGH);
   }
 }
 
-// @HoliIsADog
 void setPinMode() {
   pinMode(L9110S_A_1B, OUTPUT);
   pinMode(L9110S_A_1A, OUTPUT);
   pinMode(L9110S_B_1B, OUTPUT);
   pinMode(L9110S_B_1A, OUTPUT);
 }
-// @HoliIsADog
 
 void requestReceived(int count) { //onReceive
   requestType = Wire.read();
@@ -134,7 +143,12 @@ void response(char request) {
       break;
   }
 }
-
+void sendModuleStatus (char moduleStatus) {
+  Wire.beginTransmission(MASTER_ADDRESS);
+  Wire.write(MODULE_DATA_MODULE_STATUS);
+  Wire.write(moduleStatus);
+  Wire.endTransmission();
+}
 void getModuleControl(char control) { //
   switch (control) {
     case MODULE_DATA_MODULE_ACTION_UP:
@@ -151,25 +165,24 @@ void getModuleControl(char control) { //
       break;
     case MODULE_DATA_MODULE_ACTION_ATTACK:
       if (attackReady) {
+        Serial.println("Module Attack");
         moduleAttack();
         attackReady = false;
-        time_now = millis(); //Start timeout
-      } else {
-        if (millis() - time_now > attackTimeout) {
-          attackReady = true;
-          moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY;
-          moduleStatusUpdated = true;
-          Serial.println("Attack ready");
-        } else {
-          moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_CD;
-          Serial.println("Attack CD");
-          moduleStatusUpdated = true;
-        }
+        cd.start();
       }
+      Serial.println("Attack CD");
+      moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_CD;
+      moduleStatusUpdated = true;
       break;
     default:
       break;
   }
+}
+
+void cdEnd () {
+  attackReady = true;
+  Serial.println("Attack Ready");
+  sendModuleStatus(MODULE_DATA_MODULE_STATUS_ATTACK_READY);
 }
 
 void moduleUp() {
@@ -189,35 +202,25 @@ void moduleRight() {
 }
 
 void moduleAttack() {
-  Serial.println("Module Attack");
-}
-
-// @HoliIsADog
-void control_L9110S_attack(){
   analogWrite(L9110S_A_1A, HIGH);
   analogWrite(L9110S_A_1B, LOW);
   analogWrite(L9110S_B_1A, HIGH);
   analogWrite(L9110S_B_1B, LOW);
-  // delay(2000);    // delay time need to be changed
-  // stop_L9110S();
   stopMotor.start();
+  waeponRestore.start();
 }
 
-void control_L9110S_restore() {
+void moduleRestore() {
   analogWrite(L9110S_A_1A, LOW);
   analogWrite(L9110S_A_1B, HIGH);
   analogWrite(L9110S_B_1A, LOW);
   analogWrite(L9110S_B_1B, HIGH);
-  // delay(2000);    // delay time need to be changed
-  // stop_L9110S();
   stopMotor.start();
 }
 
 void stop_L9110S() {
-  analogWrite(L9110S_A_1B,0);
-  analogWrite(L9110S_A_1A,0);
-  analogWrite(L9110S_B_1B,0);
-  analogWrite(L9110S_B_1A,0);
-  // delay(300); 
+  analogWrite(L9110S_A_1B, 0);
+  analogWrite(L9110S_A_1A, 0);
+  analogWrite(L9110S_B_1B, 0);
+  analogWrite(L9110S_B_1A, 0);
 }
-// @HoliIsADog
