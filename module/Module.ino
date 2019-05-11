@@ -10,6 +10,8 @@
 #define L9110S_B_1B 10
 #define L9110S_B_1A 11
 
+Timer stopMotor;
+
 /* ---------- Custom Code End ---------- */
 
 /* -------------------------------------------------- */
@@ -88,7 +90,6 @@ void coustomSetup(){
   pinMode(2, OUTPUT);
   pinMode(3, OUTPUT);
 
-  Timer stopMotor;
   stopMotor.setTimeout(300);
   stopMotor.setCallback(stop_L9110S);
 }
