@@ -1,5 +1,5 @@
 {
-    "port": "/dev/cu.usbserial-14220",
+    "port": "/dev/cu.usbserial-14130",
     "board": "arduino:avr:nano",
     "programmer": "AVRISP mkII",
     "sketch": "Module.ino",

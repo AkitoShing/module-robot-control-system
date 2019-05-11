@@ -1,5 +1,5 @@
 {
-    "port": "/dev/cu.usbmodem142301",
+    "port": "/dev/cu.usbmodem141201",
     "board": "arduino:avr:uno",
     "programmer": "AVRISP mkII",
     "sketch": "Robot.ino",

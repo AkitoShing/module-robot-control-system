@@ -3,13 +3,25 @@
 #include <Data.h>
 #include <timer.h>
 
-#define MODULE_NAME "Test Module 1"
-#define MODULE_CREATOR "Li Kwok Shing"
+/* ---------- Custom Code Here ---------- */
 
 #define L9110S_A_1B 8
 #define L9110S_A_1A 9
 #define L9110S_B_1B 10
 #define L9110S_B_1A 11
+
+/* ---------- Custom Code End ---------- */
+
+/* -------------------------------------------------- */
+/* You can change the module infomation here          */
+/* The information will be sent back to the robot     */
+/* and show in the application                        */
+#define MODULE_NAME "Test Module 1"
+#define MODULE_CREATOR "Li Kwok Shing"
+/* -------------------------------------------------- */
+
+#define ATTACK_TIMEOUT 3000
+#define MODULE_RESET_DELAY 800
 
 char requestType;
 char request;
@@ -17,43 +29,35 @@ bool responsed = true;
 char responseWith;
 
 bool attackReady = true;
-int attackTimeout = 3000;
 unsigned long time_now = 0;
-
-Timer cd;
-Timer waeponRestore;
-Timer stopMotor;
 
 char moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY ;
 bool moduleStatusUpdated = false;
 
+Timer cd;
+Timer waeponRestore;
+
 void setup() {
+  coustomSetup();
   setPinMode();
 
-  pinMode(2, OUTPUT);
-  pinMode(3, OUTPUT);
-  pinMode(MODULE_ENABLE_PIN, OUTPUT);
-
-  stopMotor.setTimeout(1000);
-  stopMotor.setCallback(stop_L9110S);
-
-  cd.setTimeout(3000);
+  cd.setTimeout(ATTACK_TIMEOUT);
   cd.setCallback(cdEnd);
 
-  waeponRestore.setTimeout(500);
-  waeponRestore.setCallback(moduleRestore);
+  waeponRestore.setTimeout(MODULE_RESET_DELAY);
+  waeponRestore.setCallback(restore);
 
-  Wire.begin(SLAVE_ADDRESS);
+  Wire.begin(MODULE_I2C_ADDRESS);
   Wire.onReceive(requestReceived);
-  Serial.begin(115200);
+  Serial.begin(SOFTWARE_SERIAL_BUADRATE);
 
   Serial.print("Module Name: ");
   Serial.println(MODULE_NAME);
   Serial.print("Module Creator: ");
   Serial.println(MODULE_CREATOR);
   delay(10);
-  Serial.println("Setup Finish......");
 
+  Serial.println("Setup Finish......");
   digitalWrite(MODULE_ENABLE_PIN, HIGH);
 }
 
@@ -61,6 +65,7 @@ void loop() {
   stopMotor.update();
   cd.update();
   waeponRestore.update();
+
   if (!responsed) {
     response(responseWith);
     responsed = !responsed;
@@ -78,11 +83,22 @@ void loop() {
   }
 }
 
+void coustomSetup(){
+  //Insert code that only run single time like you normal do in setup
+  pinMode(2, OUTPUT);
+  pinMode(3, OUTPUT);
+
+  Timer stopMotor;
+  stopMotor.setTimeout(300);
+  stopMotor.setCallback(stop_L9110S);
+}
+
 void setPinMode() {
   pinMode(L9110S_A_1B, OUTPUT);
   pinMode(L9110S_A_1A, OUTPUT);
   pinMode(L9110S_B_1B, OUTPUT);
   pinMode(L9110S_B_1A, OUTPUT);
+  pinMode(MODULE_ENABLE_PIN, OUTPUT);
 }
 
 void requestReceived(int count) { //onReceive
@@ -152,15 +168,19 @@ void sendModuleStatus (char moduleStatus) {
 void getModuleControl(char control) { //
   switch (control) {
     case MODULE_DATA_MODULE_ACTION_UP:
+      Serial.println("Module Up");
       moduleUp();
       break;
     case MODULE_DATA_MODULE_ACTION_DOWN:
+      Serial.println("Module Down");
       moduleDown();
       break;
     case MODULE_DATA_MODULE_ACTION_LEFT:
+      Serial.println("Module Left");
       moduleLeft();
       break;
     case MODULE_DATA_MODULE_ACTION_RIGHT:
+      Serial.println("Module Right");
       moduleRight();
       break;
     case MODULE_DATA_MODULE_ACTION_ATTACK:
@@ -168,6 +188,7 @@ void getModuleControl(char control) { //
         Serial.println("Module Attack");
         moduleAttack();
         attackReady = false;
+        waeponRestore.start();
         cd.start();
       }
       Serial.println("Attack CD");
@@ -185,42 +206,57 @@ void cdEnd () {
   sendModuleStatus(MODULE_DATA_MODULE_STATUS_ATTACK_READY);
 }
 
+void restore(){
+  Serial.println("restore");
+  moduleRestore();
+}
+
 void moduleUp() {
-  Serial.println("Module Up");
+  //Insert code here to control the module like pointing the weapon upward
+  //This method be called when the module recevied a 'MODULE_DATA_MODULE_ACTION_UP' command from the robot
 }
 
 void moduleDown() {
-  Serial.println("Module Down");
+  //Insert code here to control the module like pointing the weapon downward
+  //This method be called when the module recevied a 'MODULE_DATA_MODULE_ACTION_DOWN' command from the robot
 }
 
 void moduleLeft() {
-  Serial.println("Module Left");
+  //Insert code here to control the module like trun toward Left
+  //This method be called when the module recevied a 'MODULE_DATA_MODULE_ACTION_LEFT' command from the robot
 }
 
 void moduleRight() {
-  Serial.println("Module Right");
+  //Insert code here to control the module like trun toward right
+  //This method be called when the module recevied a 'MODULE_DATA_MODULE_ACTION_RIGHT' command from the robot
 }
 
 void moduleAttack() {
-  analogWrite(L9110S_A_1A, HIGH);
-  analogWrite(L9110S_A_1B, LOW);
-  analogWrite(L9110S_B_1A, HIGH);
-  analogWrite(L9110S_B_1B, LOW);
+  //Insert code here to control the weapon
+  //This method will be called when the module recevied a 'MODULE_DATA_MODULE_ACTION_ATTACK' command from the robot
+  digitalWrite(L9110S_A_1A, HIGH);
+  digitalWrite(L9110S_A_1B, LOW);
+  digitalWrite(L9110S_B_1A, HIGH);
+  digitalWrite(L9110S_B_1B, LOW);
   stopMotor.start();
-  waeponRestore.start();
 }
 
 void moduleRestore() {
-  analogWrite(L9110S_A_1A, LOW);
-  analogWrite(L9110S_A_1B, HIGH);
-  analogWrite(L9110S_B_1A, LOW);
-  analogWrite(L9110S_B_1B, HIGH);
+  //Insert code here to restore the module after it action is profrommed
+  //This method will be called after the module profromed it action and some delay
+  //The delay can be configured in the define section at the top of this file
+  //The constant is named 'MODULE_RESET_DELAY' default => 800ms
+  digitalWrite(L9110S_A_1A, LOW);
+  digitalWrite(L9110S_A_1B, HIGH);
+  digitalWrite(L9110S_B_1A, LOW);
+  digitalWrite(L9110S_B_1B, HIGH);
   stopMotor.start();
 }
 
 void stop_L9110S() {
-  analogWrite(L9110S_A_1B, 0);
-  analogWrite(L9110S_A_1A, 0);
-  analogWrite(L9110S_B_1B, 0);
-  analogWrite(L9110S_B_1A, 0);
+  Serial.println("stop motor");
+  digitalWrite(L9110S_A_1B, 0);
+  digitalWrite(L9110S_A_1A, 0);
+  digitalWrite(L9110S_B_1B, 0);
+  digitalWrite(L9110S_B_1A, 0);
 }

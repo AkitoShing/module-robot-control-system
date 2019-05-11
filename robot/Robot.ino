@@ -17,12 +17,19 @@
 #define BLUETOOTH_RX 3
 #define BLUETOOTH_STATE 4
 #define BLUETOOTH_POWER 5
+#define BLUETOOTH_BUFFER_SIZE 9
+#define BLUETOOTH_UPDATE_INTERVAL 5 //in mill-second
 
-Timer routine;
-Timer recevier;
+#define ROBOT_STATUS_UPDATE_INTERVAL 1000 //in mill-second
+
+#define MAXIMUM_AMPLITUDE 255
+
+
+Timer routine; //Createing a timer object called routine 
+Timer recevier; //Create a timer object called recevier
 
 SoftwareSerial Bluetooth(BLUETOOTH_TX, BLUETOOTH_RX);
-char bluetoothBuffer[9];        //Empty bluetoothBuffer for data communication
+char bluetoothBuffer[BLUETOOTH_BUFFER_SIZE];        //Empty bluetoothBuffer for data communication
 String BluetoothData = "";
 
 String robotStatus = "";                                    //Status of robot
@@ -40,18 +47,18 @@ void setup() {
   setPinMode();
   digitalWrite(BLUETOOTH_POWER, HIGH);
 
-  Serial.begin(115200);
+  Serial.begin(SOFTWARE_SERIAL_BUADRATE);
 
   Bluetooth.begin(BLUETOOTH_BAUDRATE);
 
   Wire.begin(MASTER_ADDRESS);
   Wire.onReceive(ResponeReceived);
 
-  routine.setInterval(1000);
+  routine.setInterval(ROBOT_STATUS_UPDATE_INTERVAL);
   routine.setCallback(routineTask);
   routine.start();
 
-  recevier.setInterval(5);
+  recevier.setInterval(BLUETOOTH_UPDATE_INTERVAL);
   recevier.setCallback(getBlueToothData);
   recevier.start();
 
@@ -86,16 +93,16 @@ void getBlueToothData() {
     delay(2);
     bluetoothBuffer[datasize] = Bluetooth.read();
     datasize++;
-    if (bluetoothBuffer[0] == '{') {
+    if (bluetoothBuffer[0] == MOBILE_START_TRANSMIT) {
       while (Bluetooth.available())  {
         delay(1);
         bluetoothBuffer[datasize] = Bluetooth.read();
         datasize++;
-        if (bluetoothBuffer[datasize] > 127 || datasize > 9) {
+        if (bluetoothBuffer[datasize] > 127 || datasize > BLUETOOTH_BUFFER_SIZE) {
           Serial.println("Communication error");
           break;     // Communication error
         }
-        if (bluetoothBuffer[datasize - 1] == '}') {
+        if (bluetoothBuffer[datasize - 1] == MOBILE_END_TRANSMIT) {
           break;     // Finish receive
         }
       }
@@ -104,11 +111,11 @@ void getBlueToothData() {
       Serial.print((char)bluetoothBuffer[pointer]);
     }
     Serial.print("\n");
-    if (bluetoothBuffer[1] == '&' && datasize == 9) {
+    if (bluetoothBuffer[1] == ROBOT_DATA_JOYSTICK_CONTROL && datasize == 9) {
       setRobotControl(bluetoothBuffer);
     }
-    if (bluetoothBuffer[1] == '@' && datasize == 4) { //Module Control
-      sendModuleRequest('@', bluetoothBuffer[2]);
+    if (bluetoothBuffer[1] == MODULE_DATA_MODULE_ACTION && datasize == 4) { //Module Control
+      sendModuleRequest(bluetoothBuffer[1], bluetoothBuffer[2]);
     }
   }
 }
@@ -144,12 +151,12 @@ void setRobotControl(char data[9]) {
     int x = XorAngle;
     int y = YorAmplitude;
 
-    if (x < 0 || x > 255 || y < 0 || y > 255) {
+    if (x < 0 || x > MAXIMUM_AMPLITUDE || y < 0 || y > MAXIMUM_AMPLITUDE) {
       return; //Data Error
     }
 
-    x = map(x, 0, 255, -255.0, 255.0);
-    y = map(y, 255, 0, -255.0, 255.0);
+    x = map(x, 0, MAXIMUM_AMPLITUDE, -255, 255);
+    y = map(y, MAXIMUM_AMPLITUDE, 0, -255, 255);
 
     leftMotorPower = y + x;
     rightMotorPower = y - x;
@@ -178,11 +185,12 @@ void setRobotControl(char data[9]) {
 
     leftMotorPower = abs(leftMotorPower);
     rightMotorPower = abs(rightMotorPower);
+
 } else {//Angle and Amplitude mode
     int angle = XorAngle;
     int amplitude = YorAmplitude;
 
-    if (angle < 0 || angle > 360 || amplitude < 0 || amplitude > 255) {
+    if (angle < 0 || angle > 360 || amplitude < 0 || amplitude > MAXIMUM_AMPLITUDE) {
       return; //Data Error
     }
 
@@ -306,14 +314,14 @@ void ResponeReceived(int count) {
 
 void requestModuleInfo() {
   sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_NAME);
-  Serial.println("Name requested");
+  Serial.println("Module Name requesting");
   sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_CREATOR);
-  Serial.println("Creator requested");
+  Serial.println("Module Creator requesting...");
 }
 
 void requestModuleStatus() {
   sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_STATUS);
-  Serial.println("Module Status requested");
+  Serial.println("Module Status requesting...");
 }
 
 bool moduleEnabled() {
@@ -322,25 +330,27 @@ bool moduleEnabled() {
 
 void routineTask() {
   if (!moduleEnabled()) { //TODO: add timeout to this condition
+    Serial.println("Module is not attached or get disabled!");
+
     String data = "";
     data = MODULE_DATA_MODULE_INFO;
     data += MODULE_DATA_MODULE_STATUS;
     data += MODULE_DATA_MODULE_STATUS_MODULE_DISABLE;
     sendBluetoothData(data);
-    Serial.println(data);
   }
   if (moduleEnabled()) {
     if (moduleName == "") {
       Serial.println("No name recevied!");
       sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_NAME);
-      Serial.println("Name requested");
+      Serial.println("Module Name requesting...");
     }
     if (moduleCreator == "") {
       Serial.println("No creator recevied!");
       sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_CREATOR);
-      Serial.println("Creator requested");
+      Serial.println("Module Creator requesting...");
     }
   }
+
   if (moduleNameUpdated) {
     String data = "";
     data += MODULE_DATA_MODULE_INFO;
