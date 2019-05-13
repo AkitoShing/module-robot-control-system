@@ -51,7 +51,7 @@ void setup() {
 
   Bluetooth.begin(BLUETOOTH_BAUDRATE);
 
-  Wire.begin(MASTER_ADDRESS);
+  Wire.begin(ROBOT_I2C_ADDRESS);
   Wire.onReceive(ResponeReceived);
 
   routine.setInterval(ROBOT_STATUS_UPDATE_INTERVAL);
