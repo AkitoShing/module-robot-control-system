@@ -131,7 +131,7 @@ void response(char request) {
   switch (request) {
     case MODULE_DATA_MODULE_INFO_NAME:
       Serial.println("Name Requested");
-      Wire.beginTransmission(MASTER_ADDRESS);
+      Wire.beginTransmission(ROBOT_I2C_ADDRESS);
       Wire.write(MODULE_DATA_MODULE_INFO_NAME);
       Wire.write(MODULE_NAME);
       Wire.endTransmission();
@@ -140,7 +140,7 @@ void response(char request) {
       break;
     case MODULE_DATA_MODULE_INFO_CREATOR:
       Serial.println("Creator Requested");
-      Wire.beginTransmission(MASTER_ADDRESS);
+      Wire.beginTransmission(ROBOT_I2C_ADDRESS);
       Wire.write(MODULE_DATA_MODULE_INFO_CREATOR);
       Wire.write(MODULE_CREATOR);
       Wire.endTransmission();
@@ -149,7 +149,7 @@ void response(char request) {
       break;
     case MODULE_DATA_MODULE_STATUS:
       Serial.println("Status Requested");
-      Wire.beginTransmission(MASTER_ADDRESS);
+      Wire.beginTransmission(ROBOT_I2C_ADDRESS);
       Wire.write(MODULE_DATA_MODULE_STATUS);
       Wire.write(moduleStatus);
       Wire.endTransmission();
@@ -161,7 +161,7 @@ void response(char request) {
   }
 }
 void sendModuleStatus (char moduleStatus) {
-  Wire.beginTransmission(MASTER_ADDRESS);
+  Wire.beginTransmission(ROBOT_I2C_ADDRESS);
   Wire.write(MODULE_DATA_MODULE_STATUS);
   Wire.write(moduleStatus);
   Wire.endTransmission();

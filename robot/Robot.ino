@@ -262,7 +262,7 @@ void setRobotControl(char data[9]) {
 }
 
 void sendModuleRequest(char requestType, char controlChar) {
-  Wire.beginTransmission(SLAVE_ADDRESS);
+  Wire.beginTransmission(MODULE_I2C_ADDRESS);
   Wire.write(requestType);
   Wire.write(controlChar);
   Wire.endTransmission();
