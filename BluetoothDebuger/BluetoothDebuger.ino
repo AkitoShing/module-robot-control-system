@@ -19,7 +19,7 @@ void setup() {
 }
 
 void loop() {
-  if (digitalRead(BLUETOOTH_STATE) == LOW) {
+  if (false) {
     Serial.println("Bluetooth not connected");
     delay(1000);
   } else {

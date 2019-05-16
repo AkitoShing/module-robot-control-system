@@ -18,8 +18,8 @@ Timer stopMotor;
 /* You can change the module infomation here          */
 /* The information will be sent back to the robot     */
 /* and show in the application                        */
-#define MODULE_NAME "Test Module 1"
-#define MODULE_CREATOR "Li Kwok Shing"
+#define MODULE_NAME "Flip Flipper"
+#define MODULE_CREATOR "MRCS Team"
 /* -------------------------------------------------- */
 
 #define ATTACK_TIMEOUT 3000
@@ -33,7 +33,7 @@ char responseWith;
 bool attackReady = true;
 unsigned long time_now = 0;
 
-char moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_READY ;
+char moduleStatus;
 bool moduleStatusUpdated = false;
 
 Timer cd;
@@ -58,6 +58,10 @@ void setup() {
   Serial.print("Module Creator: ");
   Serial.println(MODULE_CREATOR);
   delay(10);
+
+  restore();
+  cdEnd();
+  delay(500);
 
   Serial.println("Setup Finish......");
   digitalWrite(MODULE_ENABLE_PIN, HIGH);
@@ -201,7 +205,7 @@ void getModuleControl(char control) { //
   }
 }
 
-void cdEnd () {
+void cdEnd() {
   attackReady = true;
   Serial.println("Attack Ready");
   sendModuleStatus(MODULE_DATA_MODULE_STATUS_ATTACK_READY);

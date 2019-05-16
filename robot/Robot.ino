@@ -47,7 +47,7 @@ void setup() {
   setPinMode();
   digitalWrite(BLUETOOTH_POWER, HIGH);
 
-  Serial.begin(SOFTWARE_SERIAL_BUADRATE);
+  Serial.begin(115200);
 
   Bluetooth.begin(BLUETOOTH_BAUDRATE);
 
@@ -138,13 +138,13 @@ void setRobotControl(char data[9]) {
   float leftMotorPower;
   float rightMotorPower;
 
-  int XorAngle = (data[2] - 48) * 100 + (data[3] - 48) * 10 + (data[4] - 48);
+  int XorAngle     = (data[2] - 48) * 100 + (data[3] - 48) * 10 + (data[4] - 48);
   int YorAmplitude = (data[5] - 48) * 100 + (data[6] - 48) * 10 + (data[7] - 48);
   
   Serial.print("Joystick Control received: ");
   Serial.print("X / Angle: ");
   Serial.print(XorAngle);
-  Serial.print(" Y / YorAmplitude: ");
+  Serial.print(", Y / YorAmplitude: ");
   Serial.println(YorAmplitude);
 
   if (joystickModeXY) { //andY mode

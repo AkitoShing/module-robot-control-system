@@ -27,6 +27,8 @@
 #define MOBILE_END_TRANSMIT '}'
 #define ROBOT_END_TRANSMIT ')'
 
+#define MODULE_ENABLE_PIN 7
+
 //Wire I2C Communication
 #define ROBOT_I2C_ADDRESS 25 //can be any number
 #define MODULE_I2C_ADDRESS 42
