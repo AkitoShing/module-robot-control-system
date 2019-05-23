@@ -18,8 +18,8 @@ Timer stopMotor;
 /* You can change the module infomation here          */
 /* The information will be sent back to the robot     */
 /* and show in the application                        */
-#define MODULE_NAME "Flip Flipper"
-#define MODULE_CREATOR "MRCS Team"
+#define MODULE_NAME "Flip Flipper" //Modifiable
+#define MODULE_CREATOR "MRCS Team" //Modifiable
 /* -------------------------------------------------- */
 
 #define ATTACK_TIMEOUT 3000
@@ -38,6 +38,8 @@ bool moduleStatusUpdated = false;
 
 Timer cd;
 Timer waeponRestore;
+
+RobotModule module;
 
 void setup() {
   coustomSetup();
@@ -111,22 +113,20 @@ void requestReceived(int count) { //onReceive
   request = Wire.read();
   while (Wire.available()) Wire.read();
 
-  Serial.print("Action Received Type: ");
-  Serial.print(requestType);
-  Serial.print(" Data: ");
-  Serial.println(request);
+  #ifdef DEBUG
+    Serial.print("Action Received Type: ");
+    Serial.print(requestType);
+    Serial.print(" Data: ");
+    Serial.println(request);
+  #endif
 
   switch (requestType) {
     case DATA_TYPE_REQUEST:
-      Serial.println("Request recevied");
       responseWith = request;
       responsed = false;
       break;
     case MODULE_DATA_MODULE_ACTION:
-      Serial.println("Control recevied");
       getModuleControl(request);
-      break;
-    default:
       break;
   }
 }
@@ -134,42 +134,36 @@ void requestReceived(int count) { //onReceive
 void response(char request) {
   switch (request) {
     case MODULE_DATA_MODULE_INFO_NAME:
-      Serial.println("Name Requested");
-      Wire.beginTransmission(ROBOT_I2C_ADDRESS);
-      Wire.write(MODULE_DATA_MODULE_INFO_NAME);
-      Wire.write(MODULE_NAME);
-      Wire.endTransmission();
-      Serial.print("Name responsed: ");
-      Serial.println(MODULE_NAME);
+      sendModuleName();
       break;
     case MODULE_DATA_MODULE_INFO_CREATOR:
-      Serial.println("Creator Requested");
-      Wire.beginTransmission(ROBOT_I2C_ADDRESS);
-      Wire.write(MODULE_DATA_MODULE_INFO_CREATOR);
-      Wire.write(MODULE_CREATOR);
-      Wire.endTransmission();
-      Serial.print("Creaotr responsed: ");
-      Serial.println(MODULE_CREATOR);
+      sendModuleCreator();
       break;
     case MODULE_DATA_MODULE_STATUS:
-      Serial.println("Status Requested");
-      Wire.beginTransmission(ROBOT_I2C_ADDRESS);
-      Wire.write(MODULE_DATA_MODULE_STATUS);
-      Wire.write(moduleStatus);
-      Wire.endTransmission();
-      Serial.print("Status responsed: ");
-      Serial.println(moduleStatus);
-      break;
-    default:
+      sendModuleStatus();
       break;
   }
 }
-void sendModuleStatus (char moduleStatus) {
+
+void sendModuleName () {
+  sendData(MODULE_DATA_MODULE_INFO_NAME, MODULE_NAME);
+}
+
+void sendModuleCreator() {
+  sendData(MODULE_DATA_MODULE_INFO_CREATOR, MODULE_CREATOR);
+}
+
+void sendModuleStatus () {
+  sendData(MODULE_DATA_MODULE_STATUS, moduleStatus);
+}
+
+void sendData (char dataType, char data) {
   Wire.beginTransmission(ROBOT_I2C_ADDRESS);
-  Wire.write(MODULE_DATA_MODULE_STATUS);
-  Wire.write(moduleStatus);
+  Wire.write(dataType);
+  Wire.write(data);
   Wire.endTransmission();
 }
+
 void getModuleControl(char control) { //
   switch (control) {
     case MODULE_DATA_MODULE_ACTION_UP:
@@ -239,11 +233,6 @@ void moduleRight() {
 void moduleAttack() {
   //Insert code here to control the weapon
   //This method will be called when the module recevied a 'MODULE_DATA_MODULE_ACTION_ATTACK' command from the robot
-  digitalWrite(L9110S_A_1A, HIGH);
-  digitalWrite(L9110S_A_1B, LOW);
-  digitalWrite(L9110S_B_1A, HIGH);
-  digitalWrite(L9110S_B_1B, LOW);
-  stopMotor.start();
 }
 
 void moduleRestore() {
@@ -251,17 +240,4 @@ void moduleRestore() {
   //This method will be called after the module profromed it action and some delay
   //The delay can be configured in the define section at the top of this file
   //The constant is named 'MODULE_RESET_DELAY' default => 800ms
-  digitalWrite(L9110S_A_1A, LOW);
-  digitalWrite(L9110S_A_1B, HIGH);
-  digitalWrite(L9110S_B_1A, LOW);
-  digitalWrite(L9110S_B_1B, HIGH);
-  stopMotor.start();
-}
-
-void stop_L9110S() {
-  Serial.println("stop motor");
-  digitalWrite(L9110S_A_1B, 0);
-  digitalWrite(L9110S_A_1A, 0);
-  digitalWrite(L9110S_B_1B, 0);
-  digitalWrite(L9110S_B_1A, 0);
 }
