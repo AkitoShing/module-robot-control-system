@@ -27,8 +27,10 @@
 #define MOBILE_END_TRANSMIT '}'
 #define ROBOT_END_TRANSMIT ')'
 
-//Wire I2C Communication
-#define ROBOT_I2C_ADDRESS 25 //can be any number
-#define MODULE_I2C_ADDRESS 42
 
-#define SOFTWARE_SERIAL_BUADRATE 115200
+//Wire I2C Communication
+#define MASTER_ADDRESS 25
+#define SLAVE_ADDRESS 42
+#define WIRE_DATA_SIZE 2
+
+#define MODULE_ENABLE_PIN 7

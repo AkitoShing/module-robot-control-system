@@ -1,3 +1,6 @@
+#include <Arduino.h>
+#line 1 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
+#line 1 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #include <Data.h>
@@ -17,19 +20,12 @@
 #define BLUETOOTH_RX 3
 #define BLUETOOTH_STATE 4
 #define BLUETOOTH_POWER 5
-#define BLUETOOTH_BUFFER_SIZE 9
-#define BLUETOOTH_UPDATE_INTERVAL 5 //in mill-second
 
-#define ROBOT_STATUS_UPDATE_INTERVAL 1000 //in mill-second
-
-#define MAXIMUM_AMPLITUDE 255
-
-
-Timer routine; //Createing a timer object called routine 
-Timer recevier; //Create a timer object called recevier
+Timer routine;
+Timer recevier;
 
 SoftwareSerial Bluetooth(BLUETOOTH_TX, BLUETOOTH_RX);
-char bluetoothBuffer[BLUETOOTH_BUFFER_SIZE];        //Empty bluetoothBuffer for data communication
+char bluetoothBuffer[9];        //Empty bluetoothBuffer for data communication
 String BluetoothData = "";
 
 String robotStatus = "";                                    //Status of robot
@@ -43,22 +39,47 @@ bool moduleCreatorUpdated = false;
 
 bool joystickModeXY = false;
 
+#line 39 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
+void setup();
+#line 66 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
+void loop();
+#line 71 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
+void setPinMode();
+#line 83 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
+void getBlueToothData();
+#line 116 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
+void sendBluetoothData(String data);
+#line 127 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
+void setRobotControl(char data[9]);
+#line 256 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
+void sendModuleRequest(char requestType, char controlChar);
+#line 268 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
+void ResponeReceived(int count);
+#line 307 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
+void requestModuleInfo();
+#line 314 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
+void requestModuleStatus();
+#line 319 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
+bool moduleEnabled();
+#line 323 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
+void routineTask();
+#line 39 "/Users/akitoshing/Documents/GitHub/module-robot-control-system/Robot/Robot.ino"
 void setup() {
   setPinMode();
   digitalWrite(BLUETOOTH_POWER, HIGH);
 
-  Serial.begin(SOFTWARE_SERIAL_BUADRATE);
+  Serial.begin(115200);
 
   Bluetooth.begin(BLUETOOTH_BAUDRATE);
 
-  Wire.begin(ROBOT_I2C_ADDRESS);
+  Wire.begin(MASTER_ADDRESS);
   Wire.onReceive(ResponeReceived);
 
-  routine.setInterval(ROBOT_STATUS_UPDATE_INTERVAL);
+  routine.setInterval(1000);
   routine.setCallback(routineTask);
   routine.start();
 
-  recevier.setInterval(BLUETOOTH_UPDATE_INTERVAL);
+  recevier.setInterval(5);
   recevier.setCallback(getBlueToothData);
   recevier.start();
 
@@ -93,16 +114,16 @@ void getBlueToothData() {
     delay(2);
     bluetoothBuffer[datasize] = Bluetooth.read();
     datasize++;
-    if (bluetoothBuffer[0] == MOBILE_START_TRANSMIT) {
+    if (bluetoothBuffer[0] == '{') {
       while (Bluetooth.available())  {
         delay(1);
         bluetoothBuffer[datasize] = Bluetooth.read();
         datasize++;
-        if (bluetoothBuffer[datasize] > 127 || datasize > BLUETOOTH_BUFFER_SIZE) {
+        if (bluetoothBuffer[datasize] > 127 || datasize > 9) {
           Serial.println("Communication error");
           break;     // Communication error
         }
-        if (bluetoothBuffer[datasize - 1] == MOBILE_END_TRANSMIT) {
+        if (bluetoothBuffer[datasize - 1] == '}') {
           break;     // Finish receive
         }
       }
@@ -111,11 +132,11 @@ void getBlueToothData() {
       Serial.print((char)bluetoothBuffer[pointer]);
     }
     Serial.print("\n");
-    if (bluetoothBuffer[1] == ROBOT_DATA_JOYSTICK_CONTROL && datasize == 9) {
+    if (bluetoothBuffer[1] == '&' && datasize == 9) {
       setRobotControl(bluetoothBuffer);
     }
-    if (bluetoothBuffer[1] == MODULE_DATA_MODULE_ACTION && datasize == 4) { //Module Control
-      sendModuleRequest(bluetoothBuffer[1], bluetoothBuffer[2]);
+    if (bluetoothBuffer[1] == '@' && datasize == 4) { //Module Control
+      sendModuleRequest('@', bluetoothBuffer[2]);
     }
   }
 }
@@ -151,12 +172,12 @@ void setRobotControl(char data[9]) {
     int x = XorAngle;
     int y = YorAmplitude;
 
-    if (x < 0 || x > MAXIMUM_AMPLITUDE || y < 0 || y > MAXIMUM_AMPLITUDE) {
+    if (x < 0 || x > 255 || y < 0 || y > 255) {
       return; //Data Error
     }
 
-    x = map(x, 0, MAXIMUM_AMPLITUDE, -255, 255);
-    y = map(y, MAXIMUM_AMPLITUDE, 0, -255, 255);
+    x = map(x, 0, 255, -255.0, 255.0);
+    y = map(y, 255, 0, -255.0, 255.0);
 
     leftMotorPower = y + x;
     rightMotorPower = y - x;
@@ -185,12 +206,11 @@ void setRobotControl(char data[9]) {
 
     leftMotorPower = abs(leftMotorPower);
     rightMotorPower = abs(rightMotorPower);
-
 } else {//Angle and Amplitude mode
     int angle = XorAngle;
     int amplitude = YorAmplitude;
 
-    if (angle < 0 || angle > 360 || amplitude < 0 || amplitude > MAXIMUM_AMPLITUDE) {
+    if (angle < 0 || angle > 360 || amplitude < 0 || amplitude > 255) {
       return; //Data Error
     }
 
@@ -262,7 +282,7 @@ void setRobotControl(char data[9]) {
 }
 
 void sendModuleRequest(char requestType, char controlChar) {
-  Wire.beginTransmission(MODULE_I2C_ADDRESS);
+  Wire.beginTransmission(SLAVE_ADDRESS);
   Wire.write(requestType);
   Wire.write(controlChar);
   Wire.endTransmission();
@@ -314,14 +334,14 @@ void ResponeReceived(int count) {
 
 void requestModuleInfo() {
   sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_NAME);
-  Serial.println("Module Name requesting");
+  Serial.println("Name requested");
   sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_CREATOR);
-  Serial.println("Module Creator requesting...");
+  Serial.println("Creator requested");
 }
 
 void requestModuleStatus() {
   sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_STATUS);
-  Serial.println("Module Status requesting...");
+  Serial.println("Module Status requested");
 }
 
 bool moduleEnabled() {
@@ -330,27 +350,25 @@ bool moduleEnabled() {
 
 void routineTask() {
   if (!moduleEnabled()) { //TODO: add timeout to this condition
-    Serial.println("Module is not attached or get disabled!");
-
     String data = "";
     data = MODULE_DATA_MODULE_INFO;
     data += MODULE_DATA_MODULE_STATUS;
     data += MODULE_DATA_MODULE_STATUS_MODULE_DISABLE;
     sendBluetoothData(data);
+    Serial.println(data);
   }
   if (moduleEnabled()) {
     if (moduleName == "") {
       Serial.println("No name recevied!");
       sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_NAME);
-      Serial.println("Module Name requesting...");
+      Serial.println("Name requested");
     }
     if (moduleCreator == "") {
       Serial.println("No creator recevied!");
       sendModuleRequest(DATA_TYPE_REQUEST, MODULE_DATA_MODULE_INFO_CREATOR);
-      Serial.println("Module Creator requesting...");
+      Serial.println("Creator requested");
     }
   }
-
   if (moduleNameUpdated) {
     String data = "";
     data += MODULE_DATA_MODULE_INFO;
@@ -376,3 +394,4 @@ void routineTask() {
     moduleStatusUpdated = false;
   }
 }
+
