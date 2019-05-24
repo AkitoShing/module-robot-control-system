@@ -178,7 +178,7 @@ void sendModuleStatus (char moduleStatus) {
     Wire.endTransmission();
 }
 
-void getModuleControl(char Control) {
+void getModuleControl(char control) {
     switch (control) {
         case MODULE_DATA_MODULE_ACTION_UP:
             Serial.println("Module Up");
@@ -202,7 +202,7 @@ void getModuleControl(char Control) {
                 moduleAttack();
                 attackReady = false;
                 weaponRestore.start();
-                cd.start()
+                cd.start();
             }
             Serial.println("Attack CD");
             moduleStatus = MODULE_DATA_MODULE_STATUS_ATTACK_CD;
@@ -214,7 +214,7 @@ void getModuleControl(char Control) {
 }
 
 void cdEnd() {
-    attackReady = ture;
+    attackReady = true;
     Serial.println("Attack Ready");
     sendModuleStatus(MODULE_DATA_MODULE_STATUS_ATTACK_READY);
 }
